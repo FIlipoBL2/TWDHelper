@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # TWD Helper - The Walking Dead Universe Digital Companion
 
 A comprehensive digital companion app for The Walking Dead Universe Roleplaying Game, built with modern React architecture and TypeScript. Features advanced character management, dice mechanics, combat systems, and AI-powered storytelling tools.
@@ -314,3 +315,7 @@ This project is a fan-created tool for The Walking Dead Universe Roleplaying Gam
 ---
 
 **TWD Beyond** - Survive the apocalypse with intelligence. 🧟‍♂️⚔️🎲
+=======
+# TWDHelper
+The Walking Dead RPG Helper, i do not make any profits and this is just a fan project if you want me to take it down please chat @filipoo.b on instagram
+>>>>>>> 8d766c0194f4c31818aea8b43893ed090b5b4f86
