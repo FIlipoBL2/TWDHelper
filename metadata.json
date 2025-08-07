@@ -1,0 +1,6 @@
+{
+  "name": "TWDBeyond",
+  "description": "An interactive dashboard for The Walking De Universe Roleplaying Game, designed to simulate a virtual tabletop experience. It features automated character sheets, integrated dice rolling, and a Gamemaster control panel.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

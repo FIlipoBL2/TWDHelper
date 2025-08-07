@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TWD Beyond</title>
+    <style>
+        :root {
+            --color-bg: #1a1a1a;
+            --color-surface: #2c2c2c;
+            --color-primary: #b71c1c;
+            --color-text: #e0e0e0;
+            --color-text-muted: #888;
+            --color-border: #444;
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --font-display: 'Impact', 'Arial Black', sans-serif;
+        }
+
+        /* Reset and Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-main);
+            font-size: 16px;
+            overflow: hidden;
+        }
+
+        /* Main App Layout */
+        #app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            flex-direction: column;
+        }
+        
+        @media (min-width: 768px) {
+            #app-container {
+                flex-direction: row;
+            }
+        }
+
+        /* Main Content & Chat */
+        #main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 1rem;
+        }
+
+        #chat-log {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 1rem;
+            background-color: var(--color-surface);
+            margin-bottom: 1rem;
+        }
+
+        .chat-message {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #3a3a3a;
+        }
+        .chat-message:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .chat-meta {
+            font-size: 0.8em;
+            color: var(--color-text-muted);
+            margin-bottom: 0.25rem;
+        }
+        .chat-meta .character-name {
+            font-weight: bold;
+            color: var(--color-primary);
+        }
+        .chat-meta .system-name {
+            font-weight: bold;
+            color: #4caf50;
+        }
+        .chat-content {
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        
+        .dice-roll-container {
+            background-color: rgba(0,0,0,0.2);
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+        }
+        .dice-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .die {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .normal-die {
+            background-color: #212121;
+            color: #fff;
+            border: 1px solid #555;
+        }
+        .stress-die {
+            background-color: #e0e0e0;
+            color: #000;
+            border: 1px solid #aaa;
+        }
+        .success {
+            box-shadow: 0 0 8px 2px #ffeb3b;
+        }
+        .messed-up {
+            box-shadow: 0 0 8px 2px var(--color-primary);
+        }
+
+        #chat-form {
+            display: flex;
+        }
+
+        #chat-input {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--color-border);
+            background-color: var(--color-surface);
+            color: var(--color-text);
+            border-radius: 4px 0 0 4px;
+            font-size: 1em;
+        }
+        #chat-input:focus {
+            outline: 2px solid var(--color-primary);
+        }
+
+        #chat-send {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--color-primary);
+            background-color: var(--color-primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 0 4px 4px 0;
+        }
+        #chat-send:hover {
+            background-color: #d32f2f;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 100%;
+            background-color: var(--color-surface);
+            border-top: 2px solid var(--color-border);
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            #sidebar {
+                width: 350px;
+                min-width: 300px;
+                border-top: none;
+                border-left: 2px solid var(--color-border);
+            }
+        }
+        
+        .sidebar-section {
+            background-color: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .sidebar-title {
+            font-family: var(--font-display);
+            color: var(--color-primary);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--color-primary);
+            padding-bottom: 0.5rem;
+        }
+
+        /* Status Panels (Threat, Clock, Haven) */
+        .status-panel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .status-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background-color: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+        }
+
+        .status-label {
+            font-size: 0.9em;
+            color: var(--color-text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .status-value {
+            font-size: 2em;
+            font-weight: bold;
+            font-family: var(--font-display);
+        }
+        #threat-level-value.threat-0 { color: #4caf50; }
+        #threat-level-value.threat-1, #threat-level-value.threat-2 { color: #ffeb3b; }
+        #threat-level-value.threat-3, #threat-level-value.threat-4 { color: #ff9800; }
+        #threat-level-value.threat-5, #threat-level-value.threat-6 { color: var(--color-primary); }
+        
+        /* Character Section */
+        #character-selector, .stat-grid {
+            display: grid;
+            gap: 0.5rem;
+        }
+        #character-selector { grid-template-columns: 1fr auto; }
+        .stat-grid { grid-template-columns: repeat(2, 1fr); margin-top: 1rem; }
+        
+        .stat-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #383838;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .stat-name { font-weight: bold; }
+        .stat-value {
+            background: var(--color-primary);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        #active-character-sheet button {
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        /* Buttons and Interactive Elements */
+        .button, button {
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+        .button:hover, button:hover {
+            background-color: #d32f2f;
+        }
+        .button-secondary {
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+        }
+        .button-secondary:hover {
+            background-color: #444;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Modals (Help, Character Sheet, Start) */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: var(--color-surface);
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--color-primary);
+            padding-bottom: 1rem;
+        }
+        
+        .modal-title {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            color: var(--color-primary);
+        }
+
+        .close-button {
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--color-text-muted);
+        }
+        .close-button:hover {
+            color: var(--color-text);
+        }
+
+        .modal-body {
+            overflow-y: auto;
+        }
+        
+        /* Help/Compendium Modal Specifics */
+        #compendium-search {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1.5rem;
+            background-color: var(--color-bg);
+            border: 1px solid var(--color-border);
+            color: var(--color-text);
+            border-radius: 4px;
+        }
+        
+        .compendium-entry {
+            margin-bottom: 1.5rem;
+        }
+
+        .compendium-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .compendium-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .compendium-table th, .compendium-table td {
+            border: 1px solid var(--color-border);
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .compendium-table th {
+            background-color: var(--color-bg);
+        }
+
+        /* Character Sheet Modal */
+        #character-sheet-modal .attribute-section { margin-bottom: 1.5rem; }
+        #character-sheet-modal .attribute-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem; }
+        #character-sheet-modal .skill-list { list-style: none; }
+        #character-sheet-modal .skill-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            background-color: var(--color-bg);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Start Modal */
+        #start-modal-content {
+            text-align: center;
+        }
+        #start-modal-content h1 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+        }
+        #start-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <main id="main-content">
+            <div id="chat-log"></div>
+            <form id="chat-form">
+                <input type="text" id="chat-input" placeholder="Enter command or roleplay text..." autocomplete="off">
+                <button type="submit" id="chat-send">SEND</button>
+            </form>
+        </main>
+
+        <aside id="sidebar">
+            <div class="sidebar-section">
+                <h2 class="sidebar-title">GAME STATUS</h2>
+                <div class="status-panel-grid">
+                    <div class="status-box">
+                        <span class="status-label">THREAT</span>
+                        <span class="status-value" id="threat-level-value">0</span>
+                    </div>
+                     <div class="status-box">
+                        <span class="status-label">CLOCK</span>
+                        <span class="status-value" id="clock-value">00:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h2 class="sidebar-title">HAVEN</h2>
+                <div class="status-panel-grid">
+                    <div class="status-box">
+                        <span class="status-label">CAPACITY</span>
+                        <span class="status-value" id="haven-capacity-value">0</span>
+                    </div>
+                     <div class="status-box">
+                        <span class="status-label">DEFENSE</span>
+                        <span class="status-value" id="haven-defense-value">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h2 class="sidebar-title">CHARACTER</h2>
+                <div id="character-selector">
+                    <select id="active-character-selector"></select>
+                    <button id="manage-characters-btn" class="button-secondary">Manage</button>
+                </div>
+                <div id="active-character-sheet">
+                    </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h2 class="sidebar-title">SYSTEM</h2>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <button id="help-btn" class="button-secondary">Help / Rules</button>
+                    <button id="save-btn" class="button">Save Game</button>
+                    <button id="load-btn-sidebar" class="button">Load Game</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div id="start-modal" class="modal">
+        <div id="start-modal-content" class="modal-content">
+            <h1 class="sidebar-title">TWDBEYOND</h1>
+            <div id="start-options">
+                <button id="new-campaign-btn" class="button">New Campaign</button>
+                <button id="new-solo-btn" class="button">New Solo Game</button>
+                <button id="load-game-btn" class="button-secondary">Load Game</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="help-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Rules & Help</h2>
+                <span class="close-button" id="close-help-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="compendium-search" placeholder="Search rules and tables...">
+                <div id="compendium-content">
+                    </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="character-sheet-modal" class="modal hidden">
+         <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="sheet-modal-title">Character Sheet</h2>
+                <span class="close-button" id="close-sheet-modal">&times;</span>
+            </div>
+            <div class="modal-body" id="sheet-modal-body">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- DATA STORE ---
+            const gameData = {
+                // All the JSON data provided by the user will be parsed and stored here.
+                // This is a placeholder for the actual parsing logic.
+            };
+
+            // --- GAME STATE ---
+            let gameState = {
+                mode: 'campaign', // 'campaign' or 'solo'
+                characters: [],
+                activeCharacterId: null,
+                npcs: [],
+                haven: {
+                    capacity: 0,
+                    defense: 0,
+                    issues: []
+                },
+                threatLevel: 0,
+                clock: 0, // in minutes
+                log: [],
+                lastPushedRoll: null, // to prevent multi-push
+            };
+
+            // --- UI ELEMENT SELECTORS ---
+            const el = {
+                chatLog: document.getElementById('chat-log'),
+                chatForm: document.getElementById('chat-form'),
+                chatInput: document.getElementById('chat-input'),
+                threatLevelValue: document.getElementById('threat-level-value'),
+                clockValue: document.getElementById('clock-value'),
+                havenCapacityValue: document.getElementById('haven-capacity-value'),
+                havenDefenseValue: document.getElementById('haven-defense-value'),
+                activeCharacterSelector: document.getElementById('active-character-selector'),
+                activeCharacterSheet: document.getElementById('active-character-sheet'),
+                helpModal: document.getElementById('help-modal'),
+                compendiumContent: document.getElementById('compendium-content'),
+                compendiumSearch: document.getElementById('compendium-search'),
+                startModal: document.getElementById('start-modal'),
+                characterSheetModal: document.getElementById('character-sheet-modal'),
+                sheetModalTitle: document.getElementById('sheet-modal-title'),
+                sheetModalBody: document.getElementById('sheet-modal-body'),
+            };
+
+            // --- INITIALIZATION ---
+            function init() {
+                // Show start modal
+                el.startModal.classList.remove('hidden');
+
+                // Event Listeners
+                document.getElementById('new-campaign-btn').addEventListener('click', () => startGame('campaign'));
+                document.getElementById('new-solo-btn').addEventListener('click', () => startGame('solo'));
+                document.getElementById('load-game-btn').addEventListener('click', loadGame);
+                document.getElementById('load-btn-sidebar').addEventListener('click', loadGame);
+
+                el.chatForm.addEventListener('submit', handleChatSubmit);
+                document.getElementById('help-btn').addEventListener('click', () => el.helpModal.classList.remove('hidden'));
+                document.getElementById('close-help-modal').addEventListener('click', () => el.helpModal.classList.add('hidden'));
+                document.getElementById('save-btn').addEventListener('click', saveGame);
+                
+                el.compendiumSearch.addEventListener('input', renderCompendium);
+
+                parseAndStoreGameData();
+                renderCompendium();
+            }
+            
+            function parseAndStoreGameData() {
+                // This is where the huge JSON blob would be parsed.
+                // For this example, I'll manually create a small subset of the data.
+                // In a real implementation, you'd have: const jsonData = JSON.parse(hugeJsonString);
+                gameData.diceRolls = [
+                    { "DICE ROLL": "Skill roll", "WHAT YOU ROLL": "Add up your skill and attribute, sixes mean successes" },
+                    { "DICE ROLL": "D6", "WHAT YOU ROLL": "Regular die roll" },
+                    { "DICE ROLL": "D66", "WHAT YOU ROLL": "Roll two dice – the first represents the tens, the other the ones" },
+                    { "DICE ROLL": "D666", "WHAT YOU ROLL": "Roll three dice – the first represents the hundreds, second the tens and the third the ones" },
+                    { "DICE ROLL": "Double high", "WHAT YOU ROLL": "Roll two dice, choose the highest" },
+                    { "DICE ROLL": "Double low", "WHAT YOU ROLL": "Roll two dice, choose the lowest" }
+                ];
+                gameData.skills = {
+                    "Strength": ["Close Combat", "Endure", "Force"],
+                    "Agility": ["Mobility", "Ranged Combat", "Stealth"],
+                    "Wits": ["Scout", "Survival", "Tech"],
+                    "Empathy": ["Leadership", "Manipulation", "Medicine"]
+                };
+                 gameData.shatteredTable = [
+                    "Talks to dead people", "Sees dead people", "Thinks the walkers are alive",
+                    "Protects one special walker", "Wants to die", "Emotionally shut off",
+                    "Involuntary rage", "Paranoid", "Obsessive-compulsive behavior"
+                ];
+                // ... and so on for all other tables and rules.
+            }
+            
+            // --- GAME START & SAVE/LOAD ---
+            function startGame(mode) {
+                gameState.mode = mode;
+                // For a real app, this would trigger a character creation flow.
+                // For now, let's create a sample character.
+                const newChar = {
+                    id: Date.now(),
+                    name: 'Rick',
+                    archetype: 'The Law Enforcer',
+                    attributes: { Strength: 3, Agility: 4, Wits: 4, Empathy: 2 },
+                    skills: { 'Ranged Combat': 2, Scout: 2, Leadership: 1 },
+                    health: 3,
+                    maxHealth: 3,
+                    stress: 0,
+                    inventory: ['Revolver', 'Badge'],
+                    drive: 'Protect my family',
+                    issue: 'Carries the weight of the world'
+                };
+                gameState.characters.push(newChar);
+                gameState.activeCharacterId = newChar.id;
+                
+                el.startModal.classList.add('hidden');
+                addLogMessage('System', `New ${mode} game started. Character 'Rick' created.`);
+                updateUI();
+            }
+
+            function saveGame() {
+                try {
+                    localStorage.setItem('twdBeyondSave', JSON.stringify(gameState));
+                    addLogMessage('System', 'Game Saved Successfully!');
+                } catch (e) {
+                    addLogMessage('System', 'Error saving game. Your browser might be blocking local storage.');
+                    console.error(e);
+                }
+            }
+
+            function loadGame() {
+                 const savedState = localStorage.getItem('twdBeyondSave');
+                 if (savedState) {
+                     gameState = JSON.parse(savedState);
+                     el.startModal.classList.add('hidden');
+                     addLogMessage('System', 'Game Loaded Successfully!');
+                     updateUI();
+                 } else {
+                     addLogMessage('System', 'No saved game found.');
+                 }
+            }
+
+            // --- CHAT & COMMANDS ---
+            function handleChatSubmit(e) {
+                e.preventDefault();
+                const input = el.chatInput.value.trim();
+                if (!input) return;
+
+                if (input.startsWith('/r')) {
+                    handleDiceCommand(input);
+                } else {
+                    const activeChar = getActiveCharacter();
+                    const charName = activeChar ? activeChar.name : 'Narrator';
+                    addLogMessage(charName, input);
+                }
+
+                el.chatInput.value = '';
+            }
+
+            function addLogMessage(sender, content, options = {}) {
+                const message = { sender, content, options, id: Date.now() };
+                gameState.log.push(message);
+                renderChat();
+            }
+
+            function handleDiceCommand(command) {
+                const parts = command.split(' ');
+                const rollType = parts[1] ? parts[1].toLowerCase() : 'd6';
+                let rollResultHtml = '';
+                
+                switch(rollType) {
+                    case 'd6':
+                        rollResultHtml = formatDiceRoll(rollSingleD6());
+                        break;
+                    case 'd66':
+                        const d66 = [rollSingleD6(), rollSingleD6()];
+                        rollResultHtml = formatDiceRoll(d66) + ` <p>Result: <strong>${d66[0].value * 10 + d66[1].value}</strong></p>`;
+                        break;
+                    case 'd666':
+                        const d666 = [rollSingleD6(), rollSingleD6(), rollSingleD6()];
+                        rollResultHtml = formatDiceRoll(d666) + ` <p>Result: <strong>${d666[0].value * 100 + d666[1].value * 10 + d666[2].value}</strong></p>`;
+                        break;
+                    case 'double':
+                        if (parts[2] === 'high') {
+                             const rolls = [rollSingleD6(), rollSingleD6()];
+                             const high = Math.max(rolls[0].value, rolls[1].value);
+                             rollResultHtml = formatDiceRoll(rolls) + `<p>Result (High): <strong>${high}</strong></p>`;
+                        } else if (parts[2] === 'low') {
+                             const rolls = [rollSingleD6(), rollSingleD6()];
+                             const low = Math.min(rolls[0].value, rolls[1].value);
+                             rollResultHtml = formatDiceRoll(rolls) + `<p>Result (Low): <strong>${low}</strong></p>`;
+                        }
+                        break;
+                    default:
+                        rollResultHtml = `<p>Unknown roll command: ${rollType}</p>`;
+                }
+                
+                addLogMessage('System', `Rolling ${rollType}...<div class="dice-roll-container">${rollResultHtml}</div>`);
+            }
+            
+            // --- CORE GAME MECHANICS ---
+            function performSkillCheck(charId, skill, attribute) {
+                const character = gameState.characters.find(c => c.id === charId);
+                if (!character) return;
+                
+                const attrValue = character.attributes[attribute] || 0;
+                const skillValue = character.skills[skill] || 0;
+                const totalDice = attrValue + skillValue;
+                const stressDiceCount = character.stress || 0;
+                
+                const baseDice = Array(totalDice).fill(0).map(() => rollSingleD6());
+                const stressDice = Array(stressDiceCount).fill(0).map(() => rollSingleD6(true));
+                const allDice = [...baseDice, ...stressDice];
+                
+                const successes = allDice.filter(d => d.value === 6).length;
+                const messedUp = stressDice.some(d => d.value === 1);
+                
+                let resultText = `<strong>${character.name}</strong> rolls for <strong>${skill}</strong> (${totalDice} base + ${stressDiceCount} stress).<br>`;
+                resultText += formatDiceRoll(allDice);
+                resultText += `<p>Successes: <strong>${successes}</strong></p>`;
+                
+                if (messedUp) {
+                    resultText += `<p style="color: var(--color-primary); font-weight: bold;">Messed Up!</p>`;
+                }
+
+                const options = {};
+                if (successes === 0 && !messedUp) { // Can't push a messed up roll
+                    options.actions = [{
+                        label: 'Push the Roll',
+                        callback: `pushSkillCheck(${charId}, '${skill}', '${attribute}')`
+                    }];
+                }
+                
+                if(messedUp) {
+                     options.actions = [
+                         { label: 'Raise Threat Level', callback: `raiseThreat(1)` },
+                         { label: 'Suffer Walker Attack', callback: `sufferWalkerAttack()` }
+                     ];
+                     // Example of dynamic logic based on rules
+                     // This is a simplified check. A real one might check for a failed Fear roll.
+                     if (Math.random() > 0.5) { // Simulating a condition to become Shattered
+                         options.actions.push({label: 'Roll on Shattered Table', callback: `rollShatteredTable()`});
+                     }
+                }
+
+                addLogMessage('System', resultText, options);
+            }
+            
+            window.pushSkillCheck = (charId, skill, attribute) => {
+                const character = gameState.characters.find(c => c.id === charId);
+                if (!character || gameState.lastPushedRoll === character.lastRollId) return;
+
+                character.stress = (character.stress || 0) + 1;
+                addLogMessage('System', `${character.name} pushes the roll, gaining 1 Stress.`);
+                // This is a simplified reroll. A full implementation would reroll non-successes.
+                performSkillCheck(charId, skill, attribute);
+                updateUI();
+            };
+            
+            window.raiseThreat = (amount) => {
+                gameState.threatLevel = Math.min(6, gameState.threatLevel + amount);
+                addLogMessage('System', `The Threat Level rises to ${gameState.threatLevel}.`);
+                updateUI();
+            }
+
+            window.sufferWalkerAttack = () => {
+                addLogMessage('System', 'A walker lunges from the shadows!');
+                // Here you would implement logic from the Walker Attack table
+            }
+
+            window.rollShatteredTable = () => {
+                const result = gameData.shatteredTable[Math.floor(Math.random() * gameData.shatteredTable.length)];
+                addLogMessage('System', `Rolling on the Shattered Table...<br><strong>Result:</strong> ${result}`);
+            }
+
+            function rollSingleD6(isStress = false) {
+                return { value: Math.ceil(Math.random() * 6), isStress };
+            }
+
+            // --- UI RENDERING ---
+            function updateUI() {
+                el.threatLevelValue.textContent = gameState.threatLevel;
+                el.threatLevelValue.className = `status-value threat-${gameState.threatLevel}`;
+                
+                const hours = Math.floor(gameState.clock / 60).toString().padStart(2, '0');
+                const minutes = (gameState.clock % 60).toString().padStart(2, '0');
+                el.clockValue.textContent = `${hours}:${minutes}`;
+                
+                el.havenCapacityValue.textContent = gameState.haven.capacity;
+                el.havenDefenseValue.textContent = gameState.haven.defense;
+
+                renderCharacterSelector();
+                renderActiveCharacter();
+            }
+
+            function renderChat() {
+                el.chatLog.innerHTML = gameState.log.map(msg => {
+                    const senderClass = msg.sender === 'System' ? 'system-name' : 'character-name';
+                    let buttonsHtml = '';
+                    if (msg.options && msg.options.actions) {
+                        buttonsHtml = `<div class="action-buttons">${msg.options.actions.map(action => 
+                            `<button class="button-secondary" onclick="${action.callback}">${action.label}</button>`
+                        ).join('')}</div>`;
+                    }
+                    return `
+                        <div class="chat-message" data-id="${msg.id}">
+                            <div class="chat-meta"><span class="${senderClass}">${msg.sender}</span></div>
+                            <div class="chat-content">${msg.content}</div>
+                            ${buttonsHtml}
+                        </div>
+                    `;
+                }).join('');
+                el.chatLog.scrollTop = el.chatLog.scrollHeight;
+            }
+            
+            function formatDiceRoll(diceArray) {
+                let html = '<div class="dice-container">';
+                diceArray.forEach(die => {
+                    const dieClass = die.isStress ? 'stress-die' : 'normal-die';
+                    let statusClass = '';
+                    if (die.value === 6) statusClass = 'success';
+                    if (die.isStress && die.value === 1) statusClass = 'messed-up';
+                    const content = (die.isStress && die.value === 1) ? '🧟' : die.value;
+                    html += `<div class="die ${dieClass} ${statusClass}">${content}</div>`;
+                });
+                html += '</div>';
+                return html;
+            }
+            
+            function renderCharacterSelector() {
+                el.activeCharacterSelector.innerHTML = gameState.characters.map(char =>
+                    `<option value="${char.id}" ${char.id === gameState.activeCharacterId ? 'selected' : ''}>${char.name}</option>`
+                ).join('');
+            }
+            
+            function renderActiveCharacter() {
+                const char = getActiveCharacter();
+                if (!char) {
+                    el.activeCharacterSheet.innerHTML = '<p>No active character.</p>';
+                    return;
+                }
+                
+                el.activeCharacterSheet.innerHTML = `
+                    <div class="stat-grid">
+                        <div class="stat-display">
+                            <span class="stat-name">Health</span>
+                            <span class="stat-value">${char.health}/${char.maxHealth}</span>
+                        </div>
+                        <div class="stat-display">
+                            <span class="stat-name">Stress</span>
+                            <span class="stat-value">${char.stress}</span>
+                        </div>
+                    </div>
+                    <div>
+                         <button class="button-secondary" onclick="window.showFullCharacterSheet(${char.id})">View Full Sheet</button>
+                    </div>
+                `;
+            }
+            
+            window.showFullCharacterSheet = (charId) => {
+                 const char = gameState.characters.find(c => c.id === charId);
+                 if(!char) return;
+                 
+                 el.sheetModalTitle.textContent = `${char.name}'s Sheet`;
+                 
+                 let skillsHtml = '';
+                 for (const attr in gameData.skills) {
+                     skillsHtml += `<div class="attribute-section">
+                        <h3 class="attribute-title">${attr} (${char.attributes[attr]})</h3>
+                        <ul class="skill-list">`;
+                     gameData.skills[attr].forEach(skill => {
+                         const skillValue = char.skills[skill] || 0;
+                         skillsHtml += `<li class="skill-item">
+                            <span>${skill} (${skillValue})</span>
+                            <button class="button-secondary" style="padding: 0.2rem 0.5rem;" onclick="performSkillCheck(${char.id}, '${skill}', '${attr}')">Roll</button>
+                         </li>`;
+                     });
+                     skillsHtml += `</ul></div>`;
+                 }
+
+                 el.sheetModalBody.innerHTML = `
+                    <p><strong>Archetype:</strong> ${char.archetype}</p>
+                    <p><strong>Drive:</strong> ${char.drive}</p>
+                    <p><strong>Issue:</strong> ${char.issue}</p>
+                    <hr style="margin: 1rem 0; border-color: var(--color-border);">
+                    ${skillsHtml}
+                 `;
+                 
+                 el.characterSheetModal.classList.remove('hidden');
+            }
+            document.getElementById('close-sheet-modal').addEventListener('click', () => el.characterSheetModal.classList.add('hidden'));
+
+
+            function renderCompendium() {
+                const searchTerm = el.compendiumSearch.value.toLowerCase();
+                let content = '';
+
+                // Simple example for one table
+                const diceRollsData = gameData.diceRolls.filter(row => 
+                    Object.values(row).some(val => val.toString().toLowerCase().includes(searchTerm))
+                );
+
+                if (diceRollsData.length > 0) {
+                    content += `<div class="compendium-entry">
+                        <h3 class="compendium-title">Dice Rolls</h3>
+                        <table class="compendium-table">
+                            <thead><tr><th>DICE ROLL</th><th>WHAT YOU ROLL</th></tr></thead>
+                            <tbody>
+                                ${diceRollsData.map(row => `<tr><td>${row['DICE ROLL']}</td><td>${row['WHAT YOU ROLL']}</td></tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>`;
+                }
+
+                // In a full app, you would iterate through all tables and rules in gameData
+                
+                el.compendiumContent.innerHTML = content || '<p>No results found.</p>';
+            }
+
+            // --- HELPERS ---
+            function getActiveCharacter() {
+                if (!gameState.activeCharacterId) return null;
+                return gameState.characters.find(c => c.id === gameState.activeCharacterId);
+            }
+            
+            // --- START THE APP ---
+            init();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TWDBeyond - The Walking Dead RPG Companion</title>
+    <style>
+        :root {
+            --twd-red: #c9131a;
+            --twd-dark: #222;
+            --twd-gray: #333;
+            --twd-light: #f5f5f5;
+            --twd-offwhite: #e9e5d8;
+            --twd-brown: #5d4037;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--twd-dark);
+            color: var(--twd-offwhite);
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+            gap: 10px;
+            padding: 10px;
+        }
+        
+        header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            background-color: var(--twd-gray);
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo h1 {
+            color: var(--twd-red);
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--twd-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .mode-selector {
+            display: flex;
+            background: var(--twd-gray);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .mode-btn {
+            padding: 8px 15px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--twd-offwhite);
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .mode-btn.active {
+            background-color: var(--twd-red);
+        }
+        
+        .control-btn {
+            padding: 8px 15px;
+            background: var(--twd-gray);
+            border: none;
+            color: var(--twd-offwhite);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .control-btn:hover {
+            background-color: var(--twd-red);
+        }
+        
+        .sidebar {
+            background-color: var(--twd-gray);
+            border-radius: 5px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+        }
+        
+        .sidebar h2 {
+            color: var(--twd-red);
+            font-size: 18px;
+        }
+        
+        .character-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .character-item {
+            padding: 10px;
+            background-color: #2a2a2a;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .character-item.active {
+            border-left: 3px solid var(--twd-red);
+            background-color: #333;
+        }
+        
+        .character-item:hover {
+            background-color: #333;
+        }
+        
+        .character-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .character-stats {
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .npc-section {
+            margin-top: 20px;
+        }
+        
+        .npc-item {
+            padding: 8px;
+            background-color: #2a2a2a;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .npc-item:hover {
+            background-color: #333;
+        }
+        
+        .npc-name {
+            font-weight: bold;
+        }
+        
+        .npc-status {
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .haven-section {
+            margin-top: 20px;
+        }
+        
+        .haven-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .haven-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .stat-bar {
+            height: 20px;
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .stat-fill {
+            height: 100%;
+            background-color: var(--twd-red);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        
+        .threat-level {
+            margin-top: 15px;
+        }
+        
+        .threat-title {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .threat-meter {
+            height: 30px;
+            display: flex;
+        }
+        
+        .threat-tick {
+            flex: 1;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .threat-tick.active {
+            background-color: var(--twd-red);
+            color: white;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .chat-container {
+            flex: 1;
+            background-color: var(--twd-gray);
+            border-radius: 5px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            padding: 10px 15px;
+            background-color: #2a2a2a;
+            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            position: relative;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.system {
+            background-color: #2a2a2a;
+            align-self: center;
+            max-width: 90%;
+            border-radius: 10px;
+            font-style: italic;
+        }
+        
+        .message.player {
+            background-color: #3a3a3a;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .message.gm {
+            background-color: #2c3a5a;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        
+        .message-rolls {
+            margin-top: 8px;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .roll {
+            padding: 3px 8px;
+            background-color: #444;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .roll.success {
+            background-color: #2e7d32;
+        }
+        
+        .roll.failure {
+            background-color: #c62828;
+        }
+        
+        .roll.messedup {
+            background-color: #8e24aa;
+        }
+        
+        .chat-input-container {
+            padding: 10px 15px;
+            background-color: #2a2a2a;
+            border-top: 1px solid #444;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 10px 15px;
+            background-color: #333;
+            border: none;
+            border-radius: 20px;
+            color: var(--twd-offwhite);
+            font-size: 16px;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--twd-red);
+        }
+        
+        .dice-controls {
+            display: flex;
+            gap: 5px;
+            background-color: #2a2a2a;
+            padding: 8px 15px;
+            border-top: 1px solid #444;
+        }
+        
+        .dice-btn {
+            padding: 5px 10px;
+            background-color: #333;
+            border: none;
+            border-radius: 4px;
+            color: var(--twd-offwhite);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .dice-btn:hover {
+            background-color: var(--twd-red);
+        }
+        
+        .dice-btn.active {
+            background-color: var(--twd-red);
+        }
+        
+        .right-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .rules-panel {
+            background-color: var(--twd-gray);
+            border-radius: 5px;
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .rules-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .rules-content {
+            font-size: 14px;
+        }
+        
+        .rules-content h3 {
+            color: var(--twd-red);
+            margin: 15px 0 10px;
+        }
+        
+        .rules-content p {
+            margin-bottom: 10px;
+        }
+        
+        .rules-content ul {
+            padding-left: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .rules-content li {
+            margin-bottom: 5px;
+        }
+        
+        .table-container {
+            background-color: var(--twd-gray);
+            border-radius: 5px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background-color: #2a2a2a;
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+        
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #333;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .clock-container {
+            background-color: var(--twd-gray);
+            border-radius: 5px;
+            padding: 15px;
+        }
+        
+        .clock-header {
+            margin-bottom: 15px;
+        }
+        
+        .clock {
+            width: 100%;
+            height: 180px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .clock-face {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background-color: #2a2a2a;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .clock-center {
+            width: 12px;
+            height: 12px;
+            background-color: var(--twd-red);
+            border-radius: 50%;
+            position: absolute;
+        }
+        
+        .clock-hand {
+            position: absolute;
+            width: 2px;
+            height: 60px;
+            background-color: var(--twd-red);
+            transform-origin: bottom;
+            transform: rotate(0deg);
+            transition: transform 0.5s;
+        }
+        
+        .clock-markers {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .clock-marker {
+            position: absolute;
+            width: 4px;
+            height: 8px;
+            background-color: #aaa;
+            left: 50%;
+            margin-left: -2px;
+            transform-origin: bottom;
+        }
+        
+        .clock-label {
+            position: absolute;
+            font-size: 12px;
+            color: #aaa;
+            transform-origin: center;
+        }
+        
+        .dice-container {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            min-height: 40px;
+        }
+        
+        .die {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+        
+        .die.normal {
+            background-color: var(--twd-dark);
+            color: var(--twd-offwhite);
+            border: 2px solid #555;
+        }
+        
+        .die.stress {
+            background-color: var(--twd-offwhite);
+            color: var(--twd-dark);
+            border: 2px solid #555;
+        }
+        
+        .die.stress.messedup {
+            background-color: var(--twd-red);
+            color: white;
+        }
+        
+        .die.messedup-symbol::before {
+            content: "🧟";
+            font-size: 20px;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #2a2a2a;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #2a2a2a transparent transparent transparent;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: var(--twd-gray);
+            border-radius: 5px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            background-color: var(--twd-red);
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn.secondary {
+            background-color: #444;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .character-sheet {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .sheet-section {
+            margin-bottom: 20px;
+        }
+        
+        .sheet-section h3 {
+            color: var(--twd-red);
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #444;
+        }
+        
+        .attribute-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .attribute-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .skill-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        
+        .skill-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .help-section {
+            margin-bottom: 15px;
+        }
+        
+        .help-section h3 {
+            color: var(--twd-red);
+            margin-bottom: 8px;
+        }
+        
+        .command-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .command-item {
+            background-color: #2a2a2a;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .command-name {
+            font-weight: bold;
+            color: var(--twd-red);
+            margin-bottom: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">TWD</div>
+                <h1>TWDBeyond</h1>
+            </div>
+            <div class="header-controls">
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="campaign">Campaign Mode</button>
+                    <button class="mode-btn" data-mode="solo">Solo Mode</button>
+                </div>
+                <button class="control-btn" id="saveBtn">Save Session</button>
+                <button class="control-btn" id="loadBtn">Load Session</button>
+                <button class="control-btn" id="helpBtn">Help</button>
+            </div>
+        </header>
+        
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Characters & Haven</h2>
+            </div>
+            
+            <div class="character-list">
+                <div class="character-item active" data-character="michelle">
+                    <div class="character-name">Michelle</div>
+                    <div class="character-stats">Leader | Wits 3 | Empathy 2</div>
+                </div>
+                <div class="character-item" data-character="hannah">
+                    <div class="character-name">Hannah</div>
+                    <div class="character-stats">Medic | Strength 3 | Wits 2</div>
+                </div>
+                <div class="character-item" data-character="david">
+                    <div class="character-name">David</div>
+                    <div class="character-stats">Scout | Agility 3 | Wits 3</div>
+                </div>
+                <div class="character-item" data-character="anthony">
+                    <div class="character-name">Anthony</div>
+                    <div class="character-stats">Teacher | Survival Expert</div>
+                </div>
+            </div>
+            
+            <div class="npc-section">
+                <h2>NPC Survivors</h2>
+                <div class="npc-item" data-npc="melissa">
+                    <div class="npc-name">Melissa</div>
+                    <div class="npc-status">Writer | Easily scared</div>
+                </div>
+                <div class="npc-item" data-npc="james">
+                    <div class="npc-name">James</div>
+                    <div class="npc-status">Mechanic | Broken</div>
+                </div>
+                <div class="npc-item" data-npc="sarah">
+                    <div class="npc-name">Sarah</div>
+                    <div class="npc-status">Teenager | Healthy</div>
+                </div>
+            </div>
+            
+            <div class="haven-section">
+                <h2 class="haven-title">Our Haven</h2>
+                <div class="haven-stats">
+                    <div>
+                        <div class="haven-title">Security</div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="haven-title">Food</div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: 60%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="haven-title">Morale</div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: 45%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="threat-level">
+                <div class="threat-title">
+                    <span>Walker Threat Level</span>
+                    <span id="threatValue">2</span>
+                </div>
+                <div class="threat-meter">
+                    <div class="threat-tick" data-level="0">0</div>
+                    <div class="threat-tick" data-level="1">1</div>
+                    <div class="threat-tick active" data-level="2">2</div>
+                    <div class="threat-tick" data-level="3">3</div>
+                    <div class="threat-tick" data-level="4">4</div>
+                    <div class="threat-tick" data-level="5">5</div>
+                    <div class="threat-tick" data-level="6">6</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h3>Game Chat</h3>
+                    <div>
+                        <span>Active Character: </span>
+                        <select id="activeCharacter">
+                            <option value="michelle">Michelle</option>
+                            <option value="hannah">Hannah</option>
+                            <option value="david">David</option>
+                            <option value="anthony">Anthony</option>
+                            <option value="gm">Game Master</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message system">
+                        <div class="message-header">
+                            <span>System</span>
+                            <span>Just now</span>
+                        </div>
+                        <div>Welcome to TWDBeyond! Type <span class="tooltip" style="color: var(--twd-red);">/help<span class="tooltiptext">Shows all available commands</span></span> for a list of commands.</div>
+                    </div>
+                    <div class="message gm">
+                        <div class="message-header">
+                            <span>Game Master</span>
+                            <span>Just now</span>
+                        </div>
+                        <div>The rain is pouring down as you approach the abandoned gas station. The sign creaks in the wind, and you can see a few walkers shambling around the pumps.</div>
+                    </div>
+                    <div class="message player">
+                        <div class="message-header">
+                            <span>Michelle</span>
+                            <span>Just now</span>
+                        </div>
+                        <div>I slowly approach the front door, trying to be as quiet as possible. I want to check if it's unlocked before making any noise.</div>
+                    </div>
+                    <div class="message gm">
+                        <div class="message-header">
+                            <span>Game Master</span>
+                            <span>Just now</span>
+                        </div>
+                        <div>The door appears to be closed but not locked. As you reach for the handle, you hear a low moan from inside...</div>
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Type your message or command...">
+                </div>
+                <div class="dice-controls">
+                    <button class="dice-btn" data-dice="d6">D6</button>
+                    <button class="dice-btn" data-dice="d66">D66</button>
+                    <button class="dice-btn" data-dice="stress">Stress Die</button>
+                    <button class="dice-btn" data-dice="messedup">Messed Up</button>
+                    <button class="dice-btn" data-dice="shattered">Shattered Table</button>
+                    <button class="dice-btn" data-dice="walker">Random Walker</button>
+                    <button class="dice-btn" data-dice="room">Room Flavor</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="right-sidebar">
+            <div class="rules-panel">
+                <div class="rules-header">
+                    <h2>Game Rules</h2>
+                    <select id="rulesSelector">
+                        <option value="core">Core Mechanics</option>
+                        <option value="combat">Combat</option>
+                        <option value="stress">Stress & Fear</option>
+                        <option value="walkers">Walkers</option>
+                    </select>
+                </div>
+                <div class="rules-content" id="rulesContent">
+                    <h3>Core Mechanics</h3>
+                    <p>The Walking Dead RPG uses a simple dice system based on six-sided dice:</p>
+                    <ul>
+                        <li><strong>Base Dice</strong>: Black dice with white numbers. Roll these for skill tests.</li>
+                        <li><strong>Stress Dice</strong>: White dice with black numbers. One is added for each stress point.</li>
+                        <li><strong>Lucky Dice</strong>: Used when chance plays a big part with no applicable skill.</li>
+                    </ul>
+                    
+                    <p>To make a skill test:</p>
+                    <ol>
+                        <li>Add your skill level + associated attribute</li>
+                        <li>Roll that many base dice</li>
+                        <li>Add one stress die for each stress point</li>
+                        <li>Rolling at least one 6 counts as a success</li>
+                    </ol>
+                    
+                    <h3>D66 Rolls</h3>
+                    <p>Some tables use D66 mechanics - roll two dice as separate digits (e.g., 3 and 5 = 35).</p>
+                    
+                    <h3>Stress & Messed Up</h3>
+                    <p>When you roll a 1 on a stress die, it's a "messed up" result. This means:</p>
+                    <ul>
+                        <li>You make noise that attracts walkers</li>
+                        <li>You run out of bullets</li>
+                        <li>You unknowingly offend an important NPC</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>Random Walker Generator</h2>
+                    <button class="control-btn" id="rollWalkerBtn">Generate</button>
+                </div>
+                <table id="walkerTable">
+                    <thead>
+                        <tr>
+                            <th>Characteristic</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Walker's Wounds</td>
+                            <td id="woundsResult">Roll to generate</td>
+                        </tr>
+                        <tr>
+                            <td>Walker's Decay</td>
+                            <td id="decayResult">Roll to generate</td>
+                        </tr>
+                        <tr>
+                            <td>Walker's Missing Parts</td>
+                            <td id="missingResult">Roll to generate</td>
+                        </tr>
+                        <tr>
+                            <td>Walker's Past Life</td>
+                            <td id="pastLifeResult">Roll to generate</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="clock-container">
+                <div class="clock-header">
+                    <h2>Game Clock</h2>
+                    <div id="currentTime">Hours: 14 | Day: 32</div>
+                </div>
+                <div class="clock">
+                    <div class="clock-face">
+                        <div class="clock-center"></div>
+                        <div class="clock-hand" id="clockHand" style="transform: rotate(210deg)"></div>
+                        <div class="clock-markers" id="clockMarkers"></div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;">
+                    <button class="control-btn" id="advanceTimeBtn" data-amount="1">+1 Hour</button>
+                    <button class="control-btn" id="advanceTimeBtn" data-amount="4">+4 Hours</button>
+                    <button class="control-btn" id="advanceTimeBtn" data-amount="24">+1 Day</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>TWDBeyond Help</h3>
+                <span>&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <h3>Chat Commands</h3>
+                    <div class="command-list">
+                        <div class="command-item">
+                            <div class="command-name">/r [dice]</div>
+                            <div>Roll dice (e.g., /r 2d6, /r d66)</div>
+                        </div>
+                        <div class="command-item">
+                            <div class="command-name">/messedup</div>
+                            <div>Roll a stress die (white with black numbers)</div>
+                        </div>
+                        <div class="command-item">
+                            <div class="command-name">/shattered</div>
+                            <div>Roll on the Shattered table when you lose your Drive</div>
+                        </div>
+                        <div class="command-item">
+                            <div class="command-name">/walker</div>
+                            <div>Generate a random walker description</div>
+                        </div>
+                        <div class="command-item">
+                            <div class="command-name">/room</div>
+                            <div>Generate room flavor for empty rooms</div>
+                        </div>
+                        <div class="command-item">
+                            <div class="command-name">/event</div>
+                            <div>Trigger a random event</div>
+                        </div>
+                        <div class="command-item">
+                            <div class="command-name">/threat [level]</div>
+                            <div>Set the walker threat level (0-6)</div>
+                        </div>
+                        <div class="command-item">
+                            <div class="command-name">/clock [time]</div>
+                            <div>Advance the game clock</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="help-section">
+                    <h3>Character Management</h3>
+                    <p>Select your active character using the dropdown in the chat header. The sidebar shows all characters and their current status.</p>
+                    
+                    <h3>Haven Management</h3>
+                    <p>Track your haven's security, food, and morale levels. Click on the threat level markers to adjust the walker threat in your area.</p>
+                    
+                    <h3>Game Modes</h3>
+                    <p><strong>Campaign Mode</strong>: Play multiple sessions forming a longer story. Track character progression and haven development.</p>
+                    <p><strong>Solo Mode</strong>: Play as a single character with GM rules for solo play. The system helps generate events and outcomes.</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3>Dice Mechanics</h3>
+                    <p>The game uses special dice:</p>
+                    <ul>
+                        <li><strong>Base Dice</strong>: Black with white numbers - used for skill tests</li>
+                        <li><strong>Stress Dice</strong>: White with black numbers - one added per stress point</li>
+                        <li><strong>Messed Up</strong>: When a stress die shows 1 (zombie face), something goes wrong</li>
+                    </ul>
+                    
+                    <p>D66 rolls are made by rolling two dice as separate digits (e.g., 2 and 5 = 25).</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" id="closeHelpBtn">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Character Sheet Modal -->
+    <div class="modal" id="characterModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Michelle's Character Sheet</h3>
+                <span>&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="character-sheet">
+                    <div class="sheet-section">
+                        <h3>Attributes</h3>
+                        <div class="attribute-grid">
+                            <div class="attribute-item">
+                                <span>Strength</span>
+                                <span>2</span>
+                            </div>
+                            <div class="attribute-item">
+                                <span>Agility</span>
+                                <span>2</span>
+                            </div>
+                            <div class="attribute-item">
+                                <span>Wits</span>
+                                <span>3</span>
+                            </div>
+                            <div class="attribute-item">
+                                <span>Empathy</span>
+                                <span>2</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="sheet-section">
+                        <h3>Skills</h3>
+                        <div class="skill-grid">
+                            <div class="skill-item">
+                                <span>Ranged Combat</span>
+                                <span>2</span>
+                            </div>
+                            <div class="skill-item">
+                                <span>Melee Combat</span>
+                                <span>1</span>
+                            </div>
+                            <div class="skill-item">
+                                <span>Survival</span>
+                                <span>3</span>
+                            </div>
+                            <div class="skill-item">
+                                <span>Medicine</span>
+                                <span>0</span>
+                            </div>
+                            <div class="skill-item">
+                                <span>Manipulation</span>
+                                <span>1</span>
+                            </div>
+                            <div class="skill-item">
+                                <span>Intimidation</span>
+                                <span>2</span>
+                            </div>
+                            <div class="skill-item">
+                                <span>Tech</span>
+                                <span>1</span>
+                            </div>
+                            <div class="skill-item">
+                                <span>Stealth</span>
+                                <span>2</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="sheet-section">
+                        <h3>Character Details</h3>
+                        <p><strong>Drive:</strong> Find my daughter who was separated during the outbreak</p>
+                        <p><strong>Issue:</strong> Trust issues with strangers</p>
+                        <p><strong>Anchors:</strong> Hannah (best friend), David (former colleague)</p>
+                        <p><strong>Stress Points:</strong> 2</p>
+                        <p><strong>Health:</strong> Healthy</p>
+                    </div>
+                    
+                    <div class="sheet-section">
+                        <h3>Equipment</h3>
+                        <ul>
+                            <li>Hunting rifle with 12 rounds</li>
+                            <li>Kitchen knife</li>
+                            <li>Backpack with basic supplies</li>
+                            <li>Map of the area</li>
+                            <li>First aid kit</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" id="closeCharacterBtn">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Shattered Table Modal -->
+    <div class="modal" id="shatteredModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Shattered Table Results</h3>
+                <span>&times;</span>
+            </div>
+            <div class="modal-body">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>D66</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>11</td>
+                            <td>You're paralyzed with fear. You can't move or speak for D6 minutes.</td>
+                        </tr>
+                        <tr>
+                            <td>12</td>
+                            <td>You scream uncontrollably for D6 rounds, attracting walkers.</td>
+                        </tr>
+                        <tr>
+                            <td>13</td>
+                            <td>You attack the nearest person, thinking they're a walker.</td>
+                        </tr>
+                        <tr>
+                            <td>14</td>
+                            <td>You drop everything you're holding and run in a random direction.</td>
+                        </tr>
+                        <tr>
+                            <td>15</td>
+                            <td>You freeze, reliving a traumatic memory from the outbreak.</td>
+                        </tr>
+                        <tr>
+                            <td>16</td>
+                            <td>You start crying uncontrollably and can't stop for D6 hours.</td>
+                        </tr>
+                        <tr>
+                            <td>21</td>
+                            <td>You become convinced everyone around you is infected.</td>
+                        </tr>
+                        <tr>
+                            <td>22</td>
+                            <td>You refuse to believe the dead are coming back to life.</td>
+                        </tr>
+                        <tr>
+                            <td>23</td>
+                            <td>You start seeing visions of dead loved ones.</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="margin-top: 15px; padding: 10px; background-color: #2a2a2a; border-radius: 4px;">
+                    <p><strong>Note:</strong> When you lose your Drive, you roll on the Shattered table. The effects last until you regain your Drive by showing you still have things to fight for.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" id="closeShatteredBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const chatMessages = document.getElementById('chatMessages');
+            const chatInput = document.getElementById('chatInput');
+            const activeCharacter = document.getElementById('activeCharacter');
+            const rulesSelector = document.getElementById('rulesSelector');
+            const rulesContent = document.getElementById('rulesContent');
+            const saveBtn = document.getElementById('saveBtn');
+            const loadBtn = document.getElementById('loadBtn');
+            const helpBtn = document.getElementById('helpBtn');
+            const closeHelpBtn = document.getElementById('closeHelpBtn');
+            const helpModal = document.getElementById('helpModal');
+            const characterModal = document.getElementById('characterModal');
+            const closeCharacterBtn = document.getElementById('closeCharacterBtn');
+            const shatteredModal = document.getElementById('shatteredModal');
+            const closeShatteredBtn = document.getElementById('closeShatteredBtn');
+            const rollWalkerBtn = document.getElementById('rollWalkerBtn');
+            const advanceTimeBtns = document.querySelectorAll('#advanceTimeBtn');
+            const threatTicks = document.querySelectorAll('.threat-tick');
+            const threatValue = document.getElementById('threatValue');
+            const diceBtns = document.querySelectorAll('.dice-btn');
+            const modeBtns = document.querySelectorAll('.mode-btn');
+            
+            // Game State
+            let gameState = {
+                mode: 'campaign',
+                characters: {
+                    michelle: {
+                        name: 'Michelle',
+                        attributes: { strength: 2, agility: 2, wits: 3, empathy: 2 },
+                        skills: { 
+                            'Ranged Combat': 2, 
+                            'Melee Combat': 1, 
+                            Survival: 3, 
+                            Medicine: 0,
+                            Manipulation: 1,
+                            Intimidation: 2,
+                            Tech: 1,
+                            Stealth: 2
+                        },
+                        drive: 'Find my daughter who was separated during the outbreak',
+                        issue: 'Trust issues with strangers',
+                        anchors: ['Hannah', 'David'],
+                        stressPoints: 2,
+                        health: 'Healthy',
+                        equipment: [
+                            'Hunting rifle with 12 rounds',
+                            'Kitchen knife',
+                            'Backpack with basic supplies',
+                            'Map of the area',
+                            'First aid kit'
+                        ]
+                    },
+                    // Additional character data would go here
+                },
+                npcs: {
+                    melissa: { name: 'Melissa', status: 'Writer | Easily scared' },
+                    james: { name: 'James', status: 'Mechanic | Broken' },
+                    sarah: { name: 'Sarah', status: 'Teenager | Healthy' }
+                },
+                haven: {
+                    security: 75,
+                    food: 60,
+                    morale: 45,
+                    threatLevel: 2
+                },
+                time: {
+                    hours: 14,
+                    day: 32
+                },
+                chatHistory: []
+            };
+            
+            // Walker Tables from knowledge base
+            const walkerWoundsTable = [
+                { D66: "64", "The Walker's Wounds": "Meat missing from the back and the neck (looks alright from the front)" },
+                { D66: "65", "The Walker's Wounds": "Hands tied up, shot through the chest" },
+                { D66: "66", "The Walker's Wounds": "Died in sickbed, infusion drip still attached" },
+                { D66: "11", "The Walker's Wounds": "Head crushed by a blunt object" },
+                { D66: "12", "The Walker's Wounds": "Deep bite marks on the neck" },
+                { D66: "13", "The Walker's Wounds": "Severe burns covering most of the body" }
+            ];
+            
+            const walkerDecayTable = [
+                { D66: "11", "The Walker's Decay": "Fresh, just turned" },
+                { D66: "12", "The Walker's Decay": "Slightly bloated, clothes torn" },
+                { D66: "13", "The Walker's Decay": "Advanced decay, limbs falling off" },
+                { D66: "14", "The Walker's Decay": "Barely recognizable as human" },
+                { D66: "15", "The Walker's Decay": "Skeleton with bits of flesh hanging on" },
+                { D66: "16", "The Walker's Decay": "Mummified, dried out" }
+            ];
+            
+            const walkerMissingPartsTable = [
+                { D66: "21", "Missing Parts": "Left arm" },
+                { D66: "22", "Missing Parts": "Right leg" },
+                { D66: "23", "Missing Parts": "Jaw" },
+                { D66: "24", "Missing Parts": "Eyes" },
+                { D66: "25", "Missing Parts": "Half the face" },
+                { D66: "26", "Missing Parts": "Internal organs visible" }
+            ];
+            
+            const walkerPastLifeTable = [
+                { D66: "31", "Past Life": "Elementary school teacher" },
+                { D66: "32", "Past Life": "Police officer" },
+                { D66: "33", "Past Life": "Doctor" },
+                { D66: "34", "Past Life": "Construction worker" },
+                { D66: "35", "Past Life": "Stay-at-home parent" },
+                { D66: "36", "Past Life": "High school student" }
+            ];
+            
+            // Initialize the app
+            initApp();
+            
+            function initApp() {
+                // Set up event listeners
+                chatInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+                        processChatInput();
+                    }
+                });
+                
+                saveBtn.addEventListener('click', saveGameState);
+                loadBtn.addEventListener('click', loadGameState);
+                helpBtn.addEventListener('click', () => helpModal.style.display = 'flex');
+                closeHelpBtn.addEventListener('click', () => helpModal.style.display = 'none');
+                
+                document.querySelector('.modal-header span').addEventListener('click', () => {
+                    helpModal.style.display = 'none';
+                    characterModal.style.display = 'none';
+                    shatteredModal.style.display = 'none';
+                });
+                
+                closeCharacterBtn.addEventListener('click', () => characterModal.style.display = 'none');
+                closeShatteredBtn.addEventListener('click', () => shatteredModal.style.display = 'none');
+                
+                rollWalkerBtn.addEventListener('click', generateRandomWalker);
+                
+                advanceTimeBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        advanceTime(parseInt(this.getAttribute('data-amount')));
+                    });
+                });
+                
+                threatTicks.forEach(tick => {
+                    tick.addEventListener('click', function() {
+                        const level = parseInt(this.getAttribute('data-level'));
+                        setThreatLevel(level);
+                    });
+                });
+                
+                diceBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const diceType = this.getAttribute('data-dice');
+                        rollDiceCommand(diceType);
+                    });
+                });
+                
+                modeBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        if (!this.classList.contains('active')) {
+                            modeBtns.forEach(b => b.classList.remove('active'));
+                            this.classList.add('active');
+                            gameState.mode = this.getAttribute('data-mode');
+                            addSystemMessage(`Switched to ${gameState.mode === 'campaign' ? 'Campaign' : 'Solo'} Mode`);
+                        }
+                    });
+                });
+                
+                rulesSelector.addEventListener('change', function() {
+                    updateRulesContent(this.value);
+                });
+                
+                // Set up character click handlers
+                document.querySelectorAll('.character-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        document.querySelectorAll('.character-item').forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+                        const characterId = this.getAttribute('data-character');
+                        activeCharacter.value = characterId;
+                    });
+                });
+                
+                // Initialize clock
+                setupClock();
+                
+                // Load saved game if available
+                loadGameState();
+                
+                // Add welcome message
+                setTimeout(() => {
+                    addSystemMessage("Welcome to TWDBeyond! Type /help for a list of commands.");
+                }, 500);
+            }
+            
+            function processChatInput() {
+                const message = chatInput.value.trim();
+                const sender = activeCharacter.value;
+                const senderName = sender === 'gm' ? 'Game Master' : gameState.characters[sender]?.name || sender;
+                
+                // Check for commands
+                if (message.startsWith('/')) {
+                    processCommand(message);
+                } else {
+                    // Regular message
+                    addChatMessage(senderName, message, 'player');
+                }
+                
+                chatInput.value = '';
+            }
+            
+            function processCommand(command) {
+                const parts = command.split(' ');
+                const cmd = parts[0].toLowerCase();
+                
+                switch (cmd) {
+                    case '/r':
+                    case '/roll':
+                        rollDice(parts[1] || '1d6');
+                        break;
+                    case '/messedup':
+                        rollStressDie();
+                        break;
+                    case '/shattered':
+                        showShatteredTable();
+                        break;
+                    case '/walker':
+                        generateRandomWalker();
+                        break;
+                    case '/room':
+                        generateRoomFlavor();
+                        break;
+                    case '/event':
+                        generateRandomEvent();
+                        break;
+                    case '/threat':
+                        if (parts[1] && !isNaN(parts[1]) && parts[1] >= 0 && parts[1] <= 6) {
+                            setThreatLevel(parseInt(parts[1]));
+                            addSystemMessage(`Threat level set to ${parts[1]}`);
+                        } else {
+                            addSystemMessage("Please specify a threat level between 0 and 6. Example: /threat 3");
+                        }
+                        break;
+                    case '/clock':
+                        if (parts[1]) {
+                            advanceTime(parseInt(parts[1]));
+                        } else {
+                            addSystemMessage(`Current time: Day ${gameState.time.day}, Hour ${gameState.time.hours}`);
+                        }
+                        break;
+                    case '/help':
+                        helpModal.style.display = 'flex';
+                        break;
+                    default:
+                        addSystemMessage(`Unknown command: ${cmd}. Type /help for a list of commands.`);
+                }
+            }
+            
+            function rollDice(diceNotation) {
+                const sender = activeCharacter.value;
+                const senderName = sender === 'gm' ? 'Game Master' : gameState.characters[sender]?.name || sender;
+                
+                // Parse dice notation (simple version)
+                let numDice = 1;
+                let sides = 6;
+                let isD66 = false;
+                
+                if (diceNotation.toLowerCase() === 'd66') {
+                    isD66 = true;
+                    numDice = 2;
+                    sides = 6;
+                } else {
+                    const match = diceNotation.match(/(\d*)d(\d+)/i);
+                    if (match) {
+                        numDice = match[1] ? parseInt(match[1]) : 1;
+                        sides = parseInt(match[2]);
+                    }
+                }
+                
+                // Roll the dice
+                const rolls = [];
+                let total = 0;
+                
+                for (let i = 0; i < numDice; i++) {
+                    const roll = Math.floor(Math.random() * sides) + 1;
+                    rolls.push(roll);
+                    total += roll;
+                }
+                
+                // Special handling for D66
+                if (isD66) {
+                    total = parseInt(`${rolls[0]}${rolls[1]}`);
+                }
+                
+                // Create message
+                let message = `rolled ${diceNotation}: `;
+                const diceElements = [];
+                
+                rolls.forEach((roll, index) => {
+                    const isStress = sender === 'gm' && diceNotation.toLowerCase() === 'stress';
+                    const isMessedUp = isStress && roll === 1;
+                    
+                    let dieClass = 'die';
+                    if (isStress) dieClass += ' stress';
+                    if (isMessedUp) {
+                        dieClass += ' messedup';
+                        diceElements.push(`<div class="${dieClass} messedup-symbol"></div>`);
+                    } else {
+                        if (isStress) {
+                            dieClass += ' stress';
+                        } else {
+                            dieClass += ' normal';
+                        }
+                        diceElements.push(`<div class="${dieClass}">${roll}</div>`);
+                    }
+                    
+                    // Check for messed up result
+                    if (isStress && roll === 1) {
+                        setTimeout(() => {
+                            addSystemMessage(`${senderName} messed up! Something goes wrong...`);
+                        }, 500);
+                    }
+                });
+                
+                message += `<div class="dice-container">${diceElements.join('')}</div>`;
+                
+                // Add success/failure indicator if it's a skill check
+                if (numDice > 1 && sides === 6 && !isD66) {
+                    const successes = rolls.filter(r => r === 6).length;
+                    if (successes > 0) {
+                        message += `<div class="roll success">${successes} success${successes !== 1 ? 'es' : ''}!</div>`;
+                    } else {
+                        message += `<div class="roll failure">No successes</div>`;
+                    }
+                }
+                
+                addChatMessage(senderName, message, sender === 'gm' ? 'gm' : 'player');
+            }
+            
+            function rollDiceCommand(diceType) {
+                switch (diceType) {
+                    case 'd6':
+                        rollDice('1d6');
+                        break;
+                    case 'd66':
+                        rollDice('d66');
+                        break;
+                    case 'stress':
+                        rollStressDie();
+                        break;
+                    case 'messedup':
+                        rollStressDie();
+                        break;
+                    case 'shattered':
+                        showShatteredTable();
+                        break;
+                    case 'walker':
+                        generateRandomWalker();
+                        break;
+                    case 'room':
+                        generateRoomFlavor();
+                        break;
+                }
+            }
+            
+            function rollStressDie() {
+                const sender = activeCharacter.value;
+                const senderName = sender === 'gm' ? 'Game Master' : gameState.characters[sender]?.name || sender;
+                
+                // Roll a single stress die (1-6)
+                const roll = Math.floor(Math.random() * 6) + 1;
+                const isMessedUp = roll === 1;
+                
+                // Create message
+                let message = `rolled a stress die: `;
+                const dieClass = isMessedUp ? 'die stress messedup messedup-symbol' : 'die stress';
+                
+                message += `<div class="dice-container"><div class="${dieClass}">${isMessedUp ? '' : roll}</div></div>`;
+                
+                if (isMessedUp) {
+                    message += `<div class="roll messedup">Messed up! Something goes wrong...</div>`;
+                    setTimeout(() => {
+                        addSystemMessage(`${senderName} messed up! Something goes wrong...`);
+                    }, 500);
+                }
+                
+                addChatMessage(senderName, message, sender === 'gm' ? 'gm' : 'player');
+            }
+            
+            function showShatteredTable() {
+                shatteredModal.style.display = 'flex';
+            }
+            
+            function generateRandomWalker() {
+                // Roll for each walker characteristic
+                const wounds = walkerWoundsTable[Math.floor(Math.random() * walkerWoundsTable.length)];
+                const decay = walkerDecayTable[Math.floor(Math.random() * walkerDecayTable.length)];
+                const missing = walkerMissingPartsTable[Math.floor(Math.random() * walkerMissingPartsTable.length)];
+                const pastLife = walkerPastLifeTable[Math.floor(Math.random() * walkerPastLifeTable.length)];
+                
+                // Update the table
+                document.getElementById('woundsResult').textContent = wounds["The Walker's Wounds"];
+                document.getElementById('decayResult').textContent = decay["The Walker's Decay"];
+                document.getElementById('missingResult').textContent = missing["Missing Parts"];
+                document.getElementById('pastLifeResult').textContent = pastLife["Past Life"];
+                
+                // Create a descriptive message
+                const walkerDescription = `This walker has ${wounds["The Walker's Wounds"]}. ${decay["The Walker's Decay"]}. ${missing["Missing Parts"]}. ${pastLife["Past Life"]} in life.`;
+                
+                addSystemMessage(`Generated random walker: ${walkerDescription}`);
+            }
+            
+            function generateRoomFlavor() {
+                const roomFlavors = [
+                    "Several maps on the floor, places marked on them with signs in ink.",
+                    "Writing on the wall: \"The infection is in your head: the dead you see are living!\".",
+                    "Hole in the wall, after an explosion.",
+                    "Empty backpack in the middle of the floor, dried blood on one wall.",
+                    "All entries blocked, chess-game placed on a table, black is winning.",
+                    "Several stuffed animals.",
+                    "Everything burnt, black and gray ash."
+                ];
+                
+                const flavor = roomFlavors[Math.floor(Math.random() * roomFlavors.length)];
+                addSystemMessage(`Room flavor: ${flavor}`);
+            }
+            
+            function generateRandomEvent() {
+                const events = [
+                    "A disease spreads in the haven, Virulence 7.",
+                    "Someone in the group is pregnant.",
+                    "A child or teenager is lost. Roll a die to see what happened to them. 1-2: Eaten by a walker. 3-4: Kidnapped. 5: Ran off. 6: Lost but safe.",
+                    "Someone tries to commit suicide.",
+                    "Someone in the group falls desperately in love with the wrong person.",
+                    "Someone in the group starts hating someone.",
+                    "An important item is missing. Roll D6 to see who has taken it. 1-2: An NPC Survivor. 3-4: Someone from another faction. 5-6: A lone Survivor who is hiding close by.",
+                    "Farm animals, perhaps pigs or sheep, are found close by. If they are taken into the haven, they will start spreading a disease with Virulence 8."
+                ];
+                
+                const event = events[Math.floor(Math.random() * events.length)];
+                addSystemMessage(`Random event: ${event}`);
+            }
+            
+            function setThreatLevel(level) {
+                // Update UI
+                threatTicks.forEach(tick => {
+                    const tickLevel = parseInt(tick.getAttribute('data-level'));
+                    if (tickLevel <= level) {
+                        tick.classList.add('active');
+                    } else {
+                        tick.classList.remove('active');
+                    }
+                });
+                
+                threatValue.textContent = level;
+                
+                // Update game state
+                gameState.haven.threatLevel = level;
+                
+                // Add message
+                addSystemMessage(`Walker threat level set to ${level}. ${getThreatDescription(level)}`);
+            }
+            
+            function getThreatDescription(level) {
+                const descriptions = [
+                    "No immediate walker threat in the area.",
+                    "Few walkers nearby, mostly inactive.",
+                    "Moderate walker activity, some may notice noise.",
+                    "Active walkers in the area, loud noises will attract them.",
+                    "High walker density, even moderate noise will attract attention.",
+                    "Walker swarm likely, extreme caution required.",
+                    "Walker swarm imminent, immediate danger everywhere."
+                ];
+                
+                return descriptions[level] || descriptions[0];
+            }
+            
+            function advanceTime(hours) {
+                gameState.time.hours += hours;
+                const days = Math.floor(gameState.time.hours / 24);
+                gameState.time.day += days;
+                gameState.time.hours = gameState.time.hours % 24;
+                
+                // Update UI
+                document.getElementById('currentTime').textContent = 
+                    `Hours: ${gameState.time.hours} | Day: ${gameState.time.day}`;
+                
+                // Update clock hand position (simplified)
+                const degrees = (gameState.time.hours / 24) * 360;
+                document.getElementById('clockHand').style.transform = `rotate(${degrees}deg)`;
+                
+                addSystemMessage(`Time advanced by ${hours} hour${hours !== 1 ? 's' : ''}. It's now Day ${gameState.time.day}, Hour ${gameState.time.hours}.`);
+                
+                // Check if threat level should increase
+                if (hours >= 4 && Math.random() < 0.3) {
+                    const newLevel = Math.min(6, gameState.haven.threatLevel + 1);
+                    if (newLevel > gameState.haven.threatLevel) {
+                        setTimeout(() => {
+                            setThreatLevel(newLevel);
+                            addSystemMessage("The passage of time has increased walker activity in the area!");
+                        }, 1000);
+                    }
+                }
+            }
+            
+            function setupClock() {
+                const markersContainer = document.getElementById('clockMarkers');
+                markersContainer.innerHTML = '';
+                
+                // Create clock markers and labels
+                for (let i = 0; i < 24; i++) {
+                    const angle = (i / 24) * 360;
+                    const rad = angle * Math.PI / 180;
+                    
+                    // Create marker
+                    const marker = document.createElement('div');
+                    marker.className = 'clock-marker';
+                    marker.style.transform = `rotate(${angle}deg) translateY(-70px)`;
+                    markersContainer.appendChild(marker);
+                    
+                    // Create label every 4 hours
+                    if (i % 4 === 0) {
+                        const label = document.createElement('div');
+                        label.className = 'clock-label';
+                        label.style.transform = `rotate(${angle}deg) translate(0, -55px) rotate(${-angle}deg)`;
+                        label.textContent = i === 0 ? '24' : i.toString();
+                        markersContainer.appendChild(label);
+                    }
+                }
+                
+                // Set initial clock position
+                const initialDegrees = (gameState.time.hours / 24) * 360;
+                document.getElementById('clockHand').style.transform = `rotate(${initialDegrees}deg)`;
+            }
+            
+            function updateRulesContent(section) {
+                let content = '';
+                
+                switch (section) {
+                    case 'core':
+                        content = `
+                            <h3>Core Mechanics</h3>
+                            <p>The Walking Dead RPG uses a simple dice system based on six-sided dice:</p>
+                            <ul>
+                                <li><strong>Base Dice</strong>: Black dice with white numbers. Roll these for skill tests.</li>
+                                <li><strong>Stress Dice</strong>: White dice with black numbers. One is added for each stress point.</li>
+                                <li><strong>Lucky Dice</strong>: Used when chance plays a big part with no applicable skill.</li>
+                            </ul>
+                            
+                            <p>To make a skill test:</p>
+                            <ol>
+                                <li>Add your skill level + associated attribute</li>
+                                <li>Roll that many base dice</li>
+                                <li>Add one stress die for each stress point</li>
+                                <li>Rolling at least one 6 counts as a success</li>
+                            </ol>
+                            
+                            <h3>D66 Rolls</h3>
+                            <p>Some tables use D66 mechanics - roll two dice as separate digits (e.g., 3 and 5 = 35).</p>
+                            
+                            <h3>Stress & Messed Up</h3>
+                            <p>When you roll a 1 on a stress die, it's a "messed up" result. This means:</p>
+                            <ul>
+                                <li>You make noise that attracts walkers</li>
+                                <li>You run out of bullets</li>
+                                <li>You unknowingly offend an important NPC</li>
+                            </ul>
+                        `;
+                        break;
+                    case 'combat':
+                        content = `
+                            <h3>Combat System</h3>
+                            <p>The game has two types of combat:</p>
+                            
+                            <h3>Duels</h3>
+                            <p>For small-scale combat between 2-3 fighters:</p>
+                            <ul>
+                                <li>Each participant rolls relevant skill dice</li>
+                                <li>Compare highest rolls to determine winner</li>
+                                <li>If two fighters gang up on one, the lone fighter must choose who to oppose</li>
+                            </ul>
+                            
+                            <h3>Brawls</h3>
+                            <p>For larger combat situations:</p>
+                            <ul>
+                                <li>GM splits participants into duels or uses brawl rules</li>
+                                <li>Each side rolls skill dice</li>
+                                <li>Side with most successes wins the brawl</li>
+                            </ul>
+                            
+                            <h3>Walker Combat</h3>
+                            <p>Combat against walkers is handled differently:</p>
+                            <ul>
+                                <li>Walkers don't roll dice - they're resolved through narrative</li>
+                                <li>PCs roll to avoid or deal with walkers</li>
+                                <li>Threat Level affects walker encounters</li>
+                            </ul>
+                            
+                            <h3>Critical Injuries</h3>
+                            <p>When a character takes a critical injury:</p>
+                            <ul>
+                                <li>Some injuries are lethal with time limits</li>
+                                <li>Medicine skill can stabilize lethal injuries</li>
+                                <li>Recovery takes time and may have penalties</li>
+                            </ul>
+                        `;
+                        break;
+                    case 'stress':
+                        content = `
+                            <h3>Stress & Fear System</h3>
+                            <p>Stress points represent your character's mental state:</p>
+                            
+                            <ul>
+                                <li>Each stress point adds one stress die to rolls</li>
+                                <li>Rolling a 1 on a stress die = "messed up" result</li>
+                                <li>At the end of each session, check Breaking Points</li>
+                            </ul>
+                            
+                            <h3>Handling Fear</h3>
+                            <p>When something traumatic happens:</p>
+                            <ol>
+                                <li>Roll Wits or Empathy dice (player's choice)</li>
+                                <li>Add +2 for each living Anchor</li>
+                                <li>No stress dice added to this roll</li>
+                                <li>At least one 6 = successfully handle fear</li>
+                            </ol>
+                            
+                            <h3>Breaking Points</h3>
+                            <p>If you fail to handle fear, you might:</p>
+                            <ul>
+                                <li>Gain additional stress points</li>
+                                <li>Temporarily lose your Drive</li>
+                                <li>Roll on the Shattered table</li>
+                            </ul>
+                            
+                            <h3>Drive System</h3>
+                            <p>Your Drive is what keeps you going:</p>
+                            <ul>
+                                <li>Once per session, use Drive for +2 to a skill roll</li>
+                                <li>If you lose your Drive, you can't use this bonus</li>
+                                <li>To regain Drive, show you still have things to fight for</li>
+                            </ul>
+                        `;
+                        break;
+                    case 'walkers':
+                        content = `
+                            <h3>Walker System</h3>
+                            <p>Walkers are a constant threat in the world of the dead:</p>
+                            
+                            <h3>Threat Level</h3>
+                            <p>Measured on a scale from 0-6:</p>
+                            <ul>
+                                <li>Indicates how active walkers are in the area</li>
+                                <li>Increased by loud noise (gunshots, screaming, etc.)</li>
+                                <li>Higher levels mean walkers are more numerous and active</li>
+                            </ul>
+                            
+                            <h3>Walker Description</h3>
+                            <p>GMs should use the Appendix tables to describe walkers:</p>
+                            <ul>
+                                <li>Roll on Walker's Wounds table</li>
+                                <li>Roll on Walker's Decay table</li>
+                                <li>Roll on Missing Parts table</li>
+                                <li>Roll on Past Life table</li>
+                            </ul>
+                            <p>This makes each walker both a "relatable human being" and a "grotesque reminder" of what could happen to PCs.</p>
+                            
+                            <h3>Walker Encounters</h3>
+                            <p>When walkers are encountered:</p>
+                            <ul>
+                                <li>PCs roll to avoid detection or deal with walkers</li>
+                                <li>Threat Level affects difficulty of rolls</li>
+                                <li>Messed up rolls attract more walkers</li>
+                            </ul>
+                            
+                            <h3>Walker Weaknesses</h3>
+                            <p>Walkers can only be stopped by:</p>
+                            <ul>
+                                <li>Destroying the brain</li>
+                                <li>Severe damage to the head</li>
+                                <li>Complete destruction of the body</li>
+                            </ul>
+                        `;
+                        break;
+                }
+                
+                rulesContent.innerHTML = content;
+            }
+            
+            function addChatMessage(sender, message, type) {
+                const now = new Date();
+                const timeString = `Just now`;
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}`;
+                
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <span>${sender}</span>
+                        <span>${timeString}</span>
+                    </div>
+                    <div>${message}</div>
+                `;
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Save to history
+                gameState.chatHistory.push({
+                    sender,
+                    message,
+                    type,
+                    timestamp: now.toISOString()
+                });
+            }
+            
+            function addSystemMessage(message) {
+                const now = new Date();
+                const timeString = `Just now`;
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message system';
+                
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <span>System</span>
+                        <span>${timeString}</span>
+                    </div>
+                    <div>${message}</div>
+                `;
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Save to history
+                gameState.chatHistory.push({
+                    sender: 'System',
+                    message,
+                    type: 'system',
+                    timestamp: now.toISOString()
+                });
+            }
+            
+            function saveGameState() {
+                try {
+                    localStorage.setItem('twdGame', JSON.stringify(gameState));
+                    addSystemMessage("Game state saved successfully!");
+                } catch (e) {
+                    addSystemMessage("Error saving game state. Your browser may not support local storage.");
+                    console.error("Save error:", e);
+                }
+            }
+            
+            function loadGameState() {
+                try {
+                    const savedGame = localStorage.getItem('twdGame');
+                    if (savedGame) {
+                        gameState = JSON.parse(savedGame);
+                        
+                        // Update UI with saved state
+                        document.getElementById('currentTime').textContent = 
+                            `Hours: ${gameState.time.hours} | Day: ${gameState.time.day}`;
+                        
+                        // Update threat level
+                        setThreatLevel(gameState.haven.threatLevel);
+                        
+                        // Update clock
+                        const degrees = (gameState.time.hours / 24) * 360;
+                        document.getElementById('clockHand').style.transform = `rotate(${degrees}deg)`;
+                        
+                        // Clear current messages and add saved history
+                        chatMessages.innerHTML = '';
+                        gameState.chatHistory.forEach(msg => {
+                            addChatMessage(msg.sender, msg.message, msg.type);
+                        });
+                        
+                        addSystemMessage("Game state loaded successfully!");
+                    }
+                } catch (e) {
+                    addSystemMessage("Error loading game state. Starting with a new game.");
+                    console.error("Load error:", e);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

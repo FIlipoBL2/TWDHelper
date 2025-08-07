@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TWDBeyond - The Walking Dead RPG</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #8B0000;
+            --secondary: #333;
+            --dark: #1a1a1a;
+            --light: #f4f4f4;
+            --zombie-green: #556B2F;
+            --danger: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --info: #3498db;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: url('https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+            background-size: cover;
+            color: var(--light);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: -1;
+        }
+        
+        header {
+            background-color: rgba(51, 51, 51, 0.9);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            text-shadow: 0 0 5px rgba(139, 0, 0, 0.7);
+        }
+        
+        .logo i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+        }
+        
+        nav a {
+            color: var(--light);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        nav a:hover, nav a.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .mode-toggle {
+            background: var(--dark);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            border: 1px solid var(--primary);
+            color: var(--light);
+            font-weight: bold;
+        }
+        
+        .mode-toggle:hover {
+            background: var(--primary);
+        }
+        
+        .main-container {
+            display: flex;
+            flex: 1;
+            padding: 1rem;
+            gap: 1rem;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: rgba(26, 26, 26, 0.9);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border: 1px solid var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        }
+        
+        .sidebar-section {
+            background: rgba(51, 51, 51, 0.7);
+            border-radius: 6px;
+            padding: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .sidebar-section h3 {
+            margin-bottom: 0.8rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .character-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .character-card {
+            background: rgba(69, 69, 69, 0.6);
+            padding: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        
+        .character-card:hover, .character-card.active {
+            border-color: var(--primary);
+            background: rgba(139, 0, 0, 0.3);
+        }
+        
+        .character-card h4 {
+            color: var(--primary);
+            margin-bottom: 0.3rem;
+        }
+        
+        .character-card p {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background: #a52a2a;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+        }
+        
+        .btn-secondary:hover {
+            background: #444;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .chat-container {
+            flex: 1;
+            background: rgba(26, 26, 26, 0.9);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--primary);
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        }
+        
+        .chat-header {
+            background: rgba(51, 51, 51, 0.8);
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .message {
+            background: rgba(69, 69, 69, 0.6);
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            max-width: 80%;
+            position: relative;
+            border: 1px solid rgba(139, 0, 0, 0.3);
+        }
+        
+        .message.system {
+            align-self: center;
+            background: rgba(52, 152, 219, 0.2);
+            border-color: var(--info);
+            text-align: center;
+            max-width: 90%;
+        }
+        
+        .message.player {
+            align-self: flex-start;
+            background: rgba(51, 51, 51, 0.7);
+            border-left: 3px solid var(--success);
+        }
+        
+        .message.gm {
+            align-self: flex-end;
+            background: rgba(139, 0, 0, 0.3);
+            border-right: 3px solid var(--primary);
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .message-content {
+            line-height: 1.5;
+        }
+        
+        .dice-result {
+            display: inline-flex;
+            gap: 5px;
+            margin-top: 0.5rem;
+        }
+        
+        .dice {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        .normal-die {
+            background: var(--dark);
+            color: white;
+            border: 1px solid #555;
+        }
+        
+        .stress-die {
+            background: white;
+            color: var(--dark);
+            border: 1px solid #ccc;
+        }
+        
+        .messup {
+            color: var(--danger);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .chat-input {
+            padding: 1rem;
+            background: rgba(51, 51, 51, 0.8);
+            border-top: 1px solid var(--primary);
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .character-select {
+            background: var(--dark);
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 0.5rem;
+        }
+        
+        .chat-input-field {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background: var(--dark);
+            color: white;
+        }
+        
+        .dice-section {
+            background: rgba(26, 26, 26, 0.9);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border: 1px solid var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        }
+        
+        .dice-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            flex: 1;
+        }
+        
+        .dice-type {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.8rem;
+            background: rgba(51, 51, 51, 0.7);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        
+        .dice-type:hover {
+            border-color: var(--primary);
+            background: rgba(139, 0, 0, 0.3);
+        }
+        
+        .dice-preview {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .dice-display {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .big-dice {
+            width: 60px;
+            height: 60px;
+            font-size: 1.8rem;
+        }
+        
+        .help-text {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-align: center;
+            max-width: 300px;
+        }
+        
+        .tables-section {
+            background: rgba(26, 26, 26, 0.9);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border: 1px solid var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        }
+        
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .table-card {
+            background: rgba(51, 51, 51, 0.7);
+            padding: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .table-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .table-card h4 {
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .table-card p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .clock-section {
+            background: rgba(26, 26, 26, 0.9);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        }
+        
+        .clock-display {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: var(--dark);
+            border: 5px solid var(--primary);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
+        }
+        
+        .clock-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            background: var(--dark);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow: auto;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 30px rgba(139, 0, 0, 0.7);
+        }
+        
+        .modal-header {
+            padding: 1rem;
+            background: rgba(51, 51, 51, 0.9);
+            border-bottom: 1px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .table-result {
+            background: rgba(51, 51, 51, 0.7);
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .help-section {
+            background: rgba(26, 26, 26, 0.9);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .help-section h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+        
+        .help-category {
+            margin-bottom: 1.5rem;
+        }
+        
+        .help-category h3 {
+            color: var(--primary);
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .command-list {
+            background: rgba(51, 51, 51, 0.7);
+            border-radius: 6px;
+            padding: 1rem;
+        }
+        
+        .command {
+            padding: 0.8rem;
+            border-bottom: 1px solid #444;
+            display: flex;
+        }
+        
+        .command:last-child {
+            border-bottom: none;
+        }
+        
+        .command-code {
+            width: 120px;
+            font-family: monospace;
+            color: var(--primary);
+        }
+        
+        .command-desc {
+            flex: 1;
+        }
+        
+        footer {
+            background: rgba(51, 51, 51, 0.9);
+            padding: 1rem;
+            text-align: center;
+            border-top: 2px solid var(--primary);
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-skull"></i>
+            <h1>TWDBeyond</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#" class="active" data-tab="chat"><i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="#" data-tab="dice"><i class="fas fa-dice"></i> Dice</a></li>
+                <li><a href="#" data-tab="tables"><i class="fas fa-table"></i> Tables</a></li>
+                <li><a href="#" data-tab="clock"><i class="fas fa-clock"></i> Clock</a></li>
+                <li><a href="#" data-tab="help"><i class="fas fa-question-circle"></i> Help</a></li>
+            </ul>
+        </nav>
+        <div class="mode-toggle" id="mode-toggle">
+            <i class="fas fa-users"></i>
+            <span>Campaign Mode</span>
+        </div>
+    </header>
+    
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3><i class="fas fa-user"></i> Characters</h3>
+                <div class="character-list" id="character-list">
+                    <!-- Character cards will be added here -->
+                </div>
+                <button class="btn" id="add-character-btn">
+                    <i class="fas fa-plus"></i> Add Character
+                </button>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3><i class="fas fa-home"></i> Haven</h3>
+                <p>Capacity: <span id="haven-capacity">2</span></p>
+                <p>Defense: <span id="haven-defense">3</span></p>
+                <p>Threat Level: <span id="haven-threat">1</span></p>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3><i class="fas fa-save"></i> Session</h3>
+                <div class="btn-group" style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary" id="save-btn">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <button class="btn btn-secondary" id="load-btn">
+                        <i class="fas fa-folder-open"></i> Load
+                    </button>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main-content">
+            <!-- Chat Section -->
+            <section class="chat-container active" data-section="chat">
+                <div class="chat-header">
+                    <h3>Roleplay Chat</h3>
+                    <div class="session-info">
+                        <span>Day 3 | 10:00 AM</span>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages will appear here -->
+                </div>
+                <div class="chat-input">
+                    <select class="character-select" id="character-select">
+                        <option value="gm">Game Master</option>
+                    </select>
+                    <input type="text" class="chat-input-field" id="chat-input" placeholder="Type your message or command (e.g., /r d66)">
+                    <button class="btn" id="send-btn">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </div>
+            </section>
+            
+            <!-- Dice Section -->
+            <section class="dice-section" data-section="dice">
+                <div class="dice-controls">
+                    <h3>Dice Roller</h3>
+                    <div class="dice-type" data-dice="d6">
+                        <i class="fas fa-dice"></i>
+                        <span>Roll d6</span>
+                    </div>
+                    <div class="dice-type" data-dice="d66">
+                        <i class="fas fa-dice"></i>
+                        <span>Roll d66 (Walker Tables)</span>
+                    </div>
+                    <div class="dice-type" data-dice="d666">
+                        <i class="fas fa-dice"></i>
+                        <span>Roll d666 (Scavenging)</span>
+                    </div>
+                    <div class="dice-type" data-dice="skill">
+                        <i class="fas fa-running"></i>
+                        <span>Skill Check</span>
+                    </div>
+                    <div class="dice-type" data-dice="push">
+                        <i class="fas fa-redo"></i>
+                        <span>Push Roll (+1 Stress)</span>
+                    </div>
+                    <div class="dice-type" data-dice="shattered">
+                        <i class="fas fa-dizzy"></i>
+                        <span>Shattered Roll</span>
+                    </div>
+                </div>
+                <div class="dice-preview">
+                    <div class="dice-display" id="dice-display">
+                        <!-- Dice will appear here -->
+                    </div>
+                    <div class="help-text">
+                        Click dice types to roll. Use /r command in chat for manual rolls.
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tables Section -->
+            <section class="tables-section" data-section="tables">
+                <h3>Game Tables</h3>
+                <div class="tables-grid" id="tables-grid">
+                    <!-- Tables will be added here -->
+                </div>
+            </section>
+            
+            <!-- Clock Section -->
+            <section class="clock-section" data-section="clock">
+                <h3>Campaign Clock</h3>
+                <div class="clock-display">
+                    <div class="clock-time">
+                        <span id="clock-days">3</span>d <span id="clock-hours">10</span>h
+                    </div>
+                </div>
+                <div class="clock-controls">
+                    <button class="btn" id="add-hour-btn">
+                        <i class="fas fa-plus"></i> Add Hour
+                    </button>
+                    <button class="btn" id="add-day-btn">
+                        <i class="fas fa-plus"></i> Add Day
+                    </button>
+                    <button class="btn" id="reset-clock-btn">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                </div>
+            </section>
+            
+            <!-- Help Section -->
+            <section class="help-section" data-section="help">
+                <h2><i class="fas fa-question-circle"></i> TWDBeyond Help</h2>
+                
+                <div class="help-category">
+                    <h3><i class="fas fa-dice"></i> Dice Commands</h3>
+                    <div class="command-list">
+                        <div class="command">
+                            <div class="command-code">/r d6</div>
+                            <div class="command-desc">Roll a single 6-sided die</div>
+                        </div>
+                        <div class="command">
+                            <div class="command-code">/r 2d6</div>
+                            <div class="command-desc">Roll two 6-sided dice</div>
+                        </div>
+                        <div class="command">
+                            <div class="command-code">/r d66</div>
+                            <div class="command-desc">Roll for Walker tables (2d6 as tens and units)</div>
+                        </div>
+                        <div class="command">
+                            <div class="command-code">/r d666</div>
+                            <div class="command-desc">Roll for Scavenging table (3d6 as hundreds, tens, units)</div>
+                        </div>
+                        <div class="command">
+                            <div class="command-code">/r skill</div>
+                            <div class="command-desc">Perform a skill check with push option</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="help-category">
+                    <h3><i class="fas fa-comments"></i> Chat Features</h3>
+                    <p>Select a character from the dropdown to roleplay as that character. The Game Master can speak as NPCs and control the game flow.</p>
+                    <p>When a roll is "messed up" (stress die shows zombie face), you'll be prompted to roll on the Shattered table.</p>
+                </div>
+                
+                <div class="help-category">
+                    <h3><i class="fas fa-save"></i> Saving & Loading</h3>
+                    <p>Click "Save" to store your current session in your browser's local storage. This includes characters, chat history, dice rolls, and the game clock.</p>
+                    <p>Click "Load" to restore your last saved session. This is especially useful for continuing campaigns.</p>
+                </div>
+                
+                <div class="help-category">
+                    <h3><i class="fas fa-users"></i> Game Modes</h3>
+                    <p><strong>Campaign Mode:</strong> For groups with a Game Master. The GM controls NPCs and game flow.</p>
+                    <p><strong>Solo Mode:</strong> For single players. The system will help guide you through solo adventures with automated responses.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Modal for Table Results -->
+    <div class="modal" id="table-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Table Result</h3>
+                <button class="close-btn" id="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="table-result-content">
+                    <!-- Table results will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>The Walking Dead Universe Roleplaying Game Companion | TWDBeyond v1.0</p>
+    </footer>
+    
+    <script>
+        // Game data and state
+        const gameState = {
+            mode: 'campaign', // 'campaign' or 'solo'
+            characters: [],
+            currentCharacter: null,
+            chatHistory: [],
+            clock: {
+                days: 3,
+                hours: 10
+            },
+            haven: {
+                capacity: 2,
+                defense: 3,
+                threat: 1
+            },
+            diceResults: []
+        };
+        
+        // Sample game tables
+        const gameTables = {
+            walkerPast: {
+                name: "Walker Past",
+                description: "Suggestions for a walker's life before the outbreak",
+                rolls: [
+                    {"D66": "11", "The Walker's Past": "Hippie professor"},
+                    {"D66": "12", "The Walker's Past": "Child with toy"},
+                    // More entries would be here in a full implementation
+                ]
+            },
+            walkerWounds: {
+                name: "Walker Wounds",
+                description: "Details on the physical state of the walker",
+                rolls: [
+                    {"D66": "11", "The Walker's Wounds": "Arm torn from the body"},
+                    {"D66": "12", "The Walker's Wounds": "Hole in gut, intestines hanging out"},
+                    // More entries
+                ]
+            },
+            scavenging: {
+                name: "Scavenging",
+                description: "Items found when scavenging for resources",
+                rolls: [
+                    {"d666": "111", "find": "Toothbrush, barely used"},
+                    {"d666": "112", "find": "Photo album. A former president appears on one photo"},
+                    // More entries
+                ]
+            },
+            shattered: {
+                name: "Shattered Table",
+                description: "Effects when overwhelmed by fear",
+                rolls: [
+                    {"D6": "1-2", "EFFECT": "You lose your Drive."},
+                    {"D6": "3-5", "EFFECT": "You become Shattered."},
+                    {"D6": "6", "EFFECT": "Your Issue changes, or you gain another one."}
+                ]
+            },
+            criticalInjuries: {
+                name: "Critical Injuries",
+                description: "Injuries suffered when becoming Broken",
+                rolls: [
+                    {"D66": "11", "CRITICAL_INJURY": "Winded", "PENALTY": "-1"},
+                    {"D66": "12", "CRITICAL_INJURY": "Broken fingers", "PENALTY": "-1"},
+                    // More entries
+                ]
+            }
+        };
+        
+        // Initialize the application
+        function initApp() {
+            // Load saved state if available
+            loadGameState();
+            
+            // Setup sample characters
+            if (gameState.characters.length === 0) {
+                gameState.characters = [
+                    {
+                        id: 1,
+                        name: "Rick Grimes",
+                        role: "Leader",
+                        description: "Former sheriff trying to keep his group safe",
+                        attributes: { agility: 4, awareness: 3, brawn: 3, coordination: 3 },
+                        skills: ['Leadership', 'Ranged Combat'],
+                        issues: ['Protective of his group', 'Struggles with morality']
+                    },
+                    {
+                        id: 2,
+                        name: "Michonne",
+                        role: "Warrior",
+                        description: "Skilled survivor with a katana",
+                        attributes: { agility: 5, awareness: 4, brawn: 4, coordination: 5 },
+                        skills: ['Close Combat', 'Stealth'],
+                        issues: ['Guarded', 'Trust issues']
+                    }
+                ];
+            }
+            
+            // Set first character as active
+            if (gameState.characters.length > 0 && !gameState.currentCharacter) {
+                gameState.currentCharacter = gameState.characters[0].id;
+            }
+            
+            // Render UI
+            renderCharacters();
+            renderTables();
+            renderChatHistory();
+            updateClockDisplay();
+            updateHavenDisplay();
+            setupEventListeners();
+            
+            // Add welcome message
+            addSystemMessage("Welcome to TWDBeyond! Type /help for commands.");
+        }
+        
+        // Render character list
+        function renderCharacters() {
+            const container = document.getElementById('character-list');
+            container.innerHTML = '';
+            
+            gameState.characters.forEach(char => {
+                const isActive = gameState.currentCharacter === char.id;
+                const card = document.createElement('div');
+                card.className = `character-card ${isActive ? 'active' : ''}`;
+                card.innerHTML = `
+                    <h4>${char.name}</h4>
+                    <p>${char.role} | Skills: ${char.skills.join(', ')}</p>
+                `;
+                card.addEventListener('click', () => {
+                    gameState.currentCharacter = char.id;
+                    renderCharacters();
+                    updateCharacterSelect();
+                });
+                container.appendChild(card);
+            });
+            
+            updateCharacterSelect();
+        }
+        
+        // Update character select dropdown
+        function updateCharacterSelect() {
+            const select = document.getElementById('character-select');
+            select.innerHTML = '<option value="gm">Game Master</option>';
+            
+            gameState.characters.forEach(char => {
+                const option = document.createElement('option');
+                option.value = char.id;
+                option.textContent = char.name;
+                if (gameState.currentCharacter === char.id) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        }
+        
+        // Render game tables
+        function renderTables() {
+            const container = document.getElementById('tables-grid');
+            container.innerHTML = '';
+            
+            for (const key in gameTables) {
+                const table = gameTables[key];
+                const card = document.createElement('div');
+                card.className = 'table-card';
+                card.innerHTML = `
+                    <h4>${table.name}</h4>
+                    <p>${table.description}</p>
+                `;
+                card.addEventListener('click', () => {
+                    rollOnTable(key);
+                });
+                container.appendChild(card);
+            }
+        }
+        
+        // Roll on a specific table
+        function rollOnTable(tableKey) {
+            const table = gameTables[tableKey];
+            let result = null;
+            let rollValue = 0;
+            
+            if (tableKey === 'walkerPast' || tableKey === 'walkerWounds') {
+                // Roll d66 (two dice for tens and units)
+                const die1 = rollDie();
+                const die2 = rollDie();
+                rollValue = parseInt(`${die1}${die2}`);
+                
+                // Find matching result
+                result = table.rolls.find(item => item.D66 === rollValue.toString());
+            } 
+            else if (tableKey === 'scavenging') {
+                // Roll d666 (three dice for hundreds, tens, units)
+                const die1 = rollDie();
+                const die2 = rollDie();
+                const die3 = rollDie();
+                rollValue = parseInt(`${die1}${die2}${die3}`);
+                
+                // Find matching result
+                result = table.rolls.find(item => item.d666 === rollValue.toString());
+            }
+            else {
+                // Roll a single d6 for other tables
+                rollValue = rollDie();
+                result = table.rolls.find(item => {
+                    const range = item.D6.split('-').map(Number);
+                    if (range.length === 1) return rollValue === range[0];
+                    return rollValue >= range[0] && rollValue <= range[1];
+                });
+            }
+            
+            if (result) {
+                showTableResult(table, rollValue, result);
+                addSystemMessage(`Rolled on ${table.name}: ${rollValue} - ${Object.values(result)[1]}`);
+            }
+        }
+        
+        // Show table result in modal
+        function showTableResult(table, roll, result) {
+            const modal = document.getElementById('table-modal');
+            const title = document.getElementById('modal-title');
+            const content = document.getElementById('table-result-content');
+            
+            title.textContent = `${table.name} Result`;
+            
+            let resultHTML = `
+                <div class="table-result">
+                    <h4>Roll: ${roll}</h4>
+                    <p><strong>${Object.keys(result)[1]}:</strong> ${Object.values(result)[1]}</p>
+                </div>
+                <p>${table.description}</p>
+            `;
+            
+            content.innerHTML = resultHTML;
+            modal.classList.add('active');
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('table-modal').classList.remove('active');
+        }
+        
+        // Render chat history
+        function renderChatHistory() {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = '';
+            
+            gameState.chatHistory.forEach(msg => {
+                const msgElement = document.createElement('div');
+                msgElement.className = `message ${msg.type}`;
+                
+                let header = '';
+                let content = msg.content;
+                
+                if (msg.type === 'system') {
+                    header = `<div class="message-header"><span>SYSTEM</span></div>`;
+                } 
+                else if (msg.type === 'player') {
+                    const char = gameState.characters.find(c => c.id === msg.characterId);
+                    header = `<div class="message-header"><span>${char ? char.name : 'Unknown'}</span></div>`;
+                }
+                else if (msg.type === 'gm') {
+                    header = `<div class="message-header"><span>GAME MASTER</span></div>`;
+                }
+                
+                // Check if there are dice results to display
+                if (msg.diceResults) {
+                    content += '<div class="dice-result">';
+                    msg.diceResults.forEach(die => {
+                        content += `<div class="dice ${die.type} ${die.value === 1 && die.type === 'stress-die' ? 'messup' : ''}">${die.value === 1 && die.type === 'stress-die' ? '🧟' : die.value}</div>`;
+                    });
+                    content += '</div>';
+                    
+                    // Add push roll option for skill checks
+                    if (msg.isSkillCheck && !msg.isPushed) {
+                        content += '<div class="push-option"><button class="btn btn-small" onclick="pushRoll(' + msg.id + ')">Push Roll (+1 Stress)</button></div>';
+                    }
+                    
+                    // Handle messed up rolls
+                    if (msg.diceResults.some(d => d.type === 'stress-die' && d.value === 1)) {
+                        content += '<div class="messup-warning">MESSED UP! Roll on Shattered table.</div>';
+                    }
+                }
+                
+                msgElement.innerHTML = `${header}<div class="message-content">${content}</div>`;
+                container.appendChild(msgElement);
+            });
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // Add a new message to chat
+        function addMessage(type, content, characterId = null, diceResults = null, isSkillCheck = false, isPushed = false) {
+            const newMessage = {
+                id: Date.now(),
+                type,
+                content,
+                characterId,
+                timestamp: new Date(),
+                diceResults,
+                isSkillCheck,
+                isPushed
+            };
+            
+            gameState.chatHistory.push(newMessage);
+            renderChatHistory();
+            saveGameState();
+        }
+        
+        // Add a system message
+        function addSystemMessage(content) {
+            addMessage('system', content);
+        }
+        
+        // Roll dice
+        function rollDice(diceType, count = 1) {
+            const results = [];
+            const diceDisplay = document.getElementById('dice-display');
+            diceDisplay.innerHTML = '';
+            
+            for (let i = 0; i < count; i++) {
+                const value = rollDie();
+                const isStress = diceType === 'stress';
+                const die = {
+                    type: isStress ? 'stress-die' : 'normal-die',
+                    value: value
+                };
+                
+                results.push(die);
+                
+                // Create visual die
+                const dieElement = document.createElement('div');
+                dieElement.className = `dice ${die.type} ${value === 1 && isStress ? 'messup' : ''} big-dice`;
+                dieElement.textContent = (value === 1 && isStress) ? '🧟' : value;
+                diceDisplay.appendChild(dieElement);
+            }
+            
+            // Add message to chat
+            let message = `Rolled ${count}${diceType === 'stress' ? ' stress' : ''} ${count > 1 ? 'dice' : 'die'}: `;
+            message += results.map(d => d.value).join(', ');
+            
+            if (diceType === 'd66') {
+                const die1 = results[0].value;
+                const die2 = results[1].value;
+                const result = parseInt(`${die1}${die2}`);
+                message = `Rolled d66: ${die1} and ${die2} = ${result}`;
+            }
+            else if (diceType === 'd666') {
+                const die1 = results[0].value;
+                const die2 = results[1].value;
+                const die3 = results[2].value;
+                const result = parseInt(`${die1}${die2}${die3}`);
+                message = `Rolled d666: ${die1}, ${die2}, ${die3} = ${result}`;
+            }
+            
+            addMessage('player', message, gameState.currentCharacter, results);
+            
+            return results;
+        }
+        
+        // Roll a single die
+        function rollDie() {
+            return Math.floor(Math.random() * 6) + 1;
+        }
+        
+        // Perform a skill check
+        function rollSkillCheck() {
+            // In a real implementation, this would use character attributes
+            const diceCount = 3; // Example: agility + skill level
+            const results = rollDice('normal', diceCount);
+            
+            // Add push roll option
+            const message = `Skill check: ${results.map(d => d.value).join(', ')}`;
+            addMessage('player', message, gameState.currentCharacter, results, true, false);
+        }
+        
+        // Push a roll (add stress die and reroll failures)
+        function pushRoll(messageId) {
+            const message = gameState.chatHistory.find(m => m.id === messageId);
+            if (!message || !message.isSkillCheck || message.isPushed) return;
+            
+            // Add stress die
+            const stressResult = rollDice('stress', 1);
+            
+            // Reroll non-successes (values less than 6)
+            const newResults = [...message.diceResults];
+            let rerolled = false;
+            
+            for (let i = 0; i < newResults.length; i++) {
+                if (newResults[i].value < 6) {
+                    newResults[i].value = rollDie();
+                    rerolled = true;
+                }
+            }
+            
+            // Update message
+            message.diceResults = [...newResults, ...stressResult];
+            message.isPushed = true;
+            message.content = `Pushed skill check: ${newResults.map(d => d.value).join(', ')} + stress: ${stressResult[0].value}`;
+            
+            renderChatHistory();
+            saveGameState();
+        }
+        
+        // Handle chat input
+        function handleChatInput() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            const charSelect = document.getElementById('character-select');
+            const characterId = charSelect.value === 'gm' ? null : parseInt(charSelect.value);
+            
+            // Check for commands
+            if (text.startsWith('/')) {
+                handleCommand(text, characterId);
+            } else {
+                // Regular message
+                const char = characterId ? 
+                    gameState.characters.find(c => c.id === characterId) : 
+                    { name: 'Game Master' };
+                    
+                addMessage(characterId ? 'player' : 'gm', text, characterId);
+            }
+            
+            input.value = '';
+        }
+        
+        // Handle commands
+        function handleCommand(command, characterId) {
+            const parts = command.split(' ');
+            const cmd = parts[0].toLowerCase();
+            
+            if (cmd === '/r' || cmd === '/roll') {
+                if (parts[1] === 'd6') {
+                    rollDice('normal', 1);
+                } 
+                else if (parts[1] === 'd66') {
+                    rollDice('d66', 2);
+                }
+                else if (parts[1] === 'd666') {
+                    rollDice('d666', 3);
+                }
+                else if (parts[1] === 'skill') {
+                    rollSkillCheck();
+                }
+                else {
+                    addSystemMessage("Invalid dice command. Use /r d6, /r d66, /r d666, or /r skill");
+                }
+            }
+            else if (cmd === '/help') {
+                showHelp();
+            }
+            else {
+                addSystemMessage("Unknown command. Type /help for available commands.");
+            }
+        }
+        
+        // Show help
+        function showHelp() {
+            const helpSection = document.querySelector('[data-section="help"]');
+            document.querySelectorAll('[data-section]').forEach(section => {
+                section.classList.remove('active');
+            });
+            helpSection.classList.add('active');
+            window.scrollTo(0, 0);
+        }
+        
+        // Update clock display
+        function updateClockDisplay() {
+            document.getElementById('clock-days').textContent = gameState.clock.days;
+            document.getElementById('clock-hours').textContent = gameState.clock.hours;
+        }
+        
+        // Update haven display
+        function updateHavenDisplay() {
+            document.getElementById('haven-capacity').textContent = gameState.haven.capacity;
+            document.getElementById('haven-defense').textContent = gameState.haven.defense;
+            document.getElementById('haven-threat').textContent = gameState.haven.threat;
+        }
+        
+        // Add hour to clock
+        function addHour() {
+            gameState.clock.hours++;
+            if (gameState.clock.hours > 23) {
+                gameState.clock.hours = 0;
+                gameState.clock.days++;
+            }
+            updateClockDisplay();
+            saveGameState();
+        }
+        
+        // Add day to clock
+        function addDay() {
+            gameState.clock.days++;
+            updateClockDisplay();
+            saveGameState();
+        }
+        
+        // Reset clock
+        function resetClock() {
+            gameState.clock = { days: 0, hours: 0 };
+            updateClockDisplay();
+            saveGameState();
+        }
+        
+        // Toggle game mode
+        function toggleGameMode() {
+            gameState.mode = gameState.mode === 'campaign' ? 'solo' : 'campaign';
+            const toggleBtn = document.getElementById('mode-toggle');
+            toggleBtn.innerHTML = gameState.mode === 'campaign' ? 
+                '<i class="fas fa-users"></i> Campaign Mode' : 
+                '<i class="fas fa-user"></i> Solo Mode';
+                
+            addSystemMessage(`Switched to ${gameState.mode} mode`);
+            saveGameState();
+        }
+        
+        // Save game state to localStorage
+        function saveGameState() {
+            const state = {
+                mode: gameState.mode,
+                characters: gameState.characters,
+                currentCharacter: gameState.currentCharacter,
+                chatHistory: gameState.chatHistory,
+                clock: gameState.clock,
+                haven: gameState.haven
+            };
+            localStorage.setItem('twdBeyondState', JSON.stringify(state));
+            addSystemMessage("Game saved successfully");
+        }
+        
+        // Load game state from localStorage
+        function loadGameState() {
+            const savedState = localStorage.getItem('twdBeyondState');
+            if (savedState) {
+                try {
+                    const state = JSON.parse(savedState);
+                    Object.assign(gameState, state);
+                    addSystemMessage("Game loaded successfully");
+                    return true;
+                } catch (e) {
+                    console.error("Error loading game state:", e);
+                }
+            }
+            return false;
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Navigation
+            document.querySelectorAll('nav a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tab = link.getAttribute('data-tab');
+                    
+                    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+                    link.classList.add('active');
+                    
+                    document.querySelectorAll('[data-section]').forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    
+                    document.querySelector(`[data-section="${tab}"]`).classList.add('active');
+                });
+            });
+            
+            // Send message
+            document.getElementById('send-btn').addEventListener('click', handleChatInput);
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleChatInput();
+            });
+            
+            // Dice controls
+            document.querySelectorAll('.dice-type').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const diceType = btn.getAttribute('data-dice');
+                    if (diceType === 'd6') rollDice('normal', 1);
+                    else if (diceType === 'd66') rollDice('d66', 2);
+                    else if (diceType === 'd666') rollDice('d666', 3);
+                    else if (diceType === 'skill') rollSkillCheck();
+                    else if (diceType === 'shattered') rollOnTable('shattered');
+                });
+            });
+            
+            // Clock controls
+            document.getElementById('add-hour-btn').addEventListener('click', addHour);
+            document.getElementById('add-day-btn').addEventListener('click', addDay);
+            document.getElementById('reset-clock-btn').addEventListener('click', resetClock);
+            
+            // Mode toggle
+            document.getElementById('mode-toggle').addEventListener('click', toggleGameMode);
+            
+            // Save/Load
+            document.getElementById('save-btn').addEventListener('click', saveGameState);
+            document.getElementById('load-btn').addEventListener('click', () => {
+                if (loadGameState()) {
+                    renderCharacters();
+                    renderChatHistory();
+                    updateClockDisplay();
+                    updateHavenDisplay();
+                }
+            });
+            
+            // Modal close
+            document.getElementById('close-modal').addEventListener('click', closeModal);
+            document.getElementById('table-modal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('table-modal')) {
+                    closeModal();
+                }
+            });
+        }
+        
+        // Initialize the app when the page loads
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

@@ -1,0 +1,632 @@
+import React, { useState, memo, useRef, useEffect, useCallback } from 'react';
+import { Combatant, RangeCategory, InventoryItem, Skill } from '../types';
+import { useGameState } from '../context/GameStateContext';
+import { CLOSE_COMBAT_WEAPONS_DEFINITIONS, RANGED_WEAPONS_DEFINITIONS } from '../constants';
+import { calculateDicePool } from '../services/diceService';
+import { 
+  getAttackIcon, 
+  getShieldIcon, 
+  getMovementIcon, 
+  getActionIcon,
+  getWarningIcon,
+  getMeleeIcon,
+  getRangedIcon,
+            <span className={`font-bold ${getRangeColor(RangeCategory.Long)} flex items-center gap-1`}>
+              {getRangedIcon("", 14)} LONG (RANGED)
+            </span>etSniperIcon,
+  getArmorIcon,
+  getCoverIcon
+} from './common/GameIcons';
+
+interface DuelCardProps {
+  combatants: Combatant[];
+  currentTurn: number;
+  round: number;
+  onEndDuel: () => void;
+  onNextTurn: () => void;
+}
+
+const DuelCard: React.FC<DuelCardProps> = ({ combatants, currentTurn, round, onEndDuel, onNextTurn }) => {
+  const { addChatMessage, resolveOpposedAttack, getPlayerCharacter, getNpc, gameState, setDuelRange } = useGameState();
+  const [selectedAction, setSelectedAction] = useState<string | null>(null);
+  const [selectedWeaponId, setSelectedWeaponId] = useState<string | null>(null);
+  const [helpDice, setHelpDice] = useState<number>(0);
+  const [isInCover, setIsInCover] = useState(false);
+  const [showCombatTypeButtons, setShowCombatTypeButtons] = useState(false);
+  const [showMoveButtons, setShowMoveButtons] = useState(false);
+  const duelRange = gameState.combat.duelRange || RangeCategory.Short;
+
+  // Auto-clear selected action as a fallback in case of stuck states
+  useEffect(() => {
+    if (selectedAction) {
+      const fallbackTimer = setTimeout(() => {
+        console.log('Auto-clearing stuck action:', selectedAction);
+        setSelectedAction(null);
+        setShowMoveButtons(false);
+        setShowCombatTypeButtons(false);
+      }, 5000); // 5 second fallback
+
+      return () => clearTimeout(fallbackTimer);
+    }
+  }, [selectedAction]);
+  
+  // Use refs to track timeouts for cleanup
+  const timeoutRefs = useRef<Set<NodeJS.Timeout>>(new Set());
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      timeoutRefs.current.forEach(timeout => clearTimeout(timeout));
+      timeoutRefs.current.clear();
+    };
+  }, []);
+
+  // Helper function to safely set timeout with cleanup tracking
+  const setSafeTimeout = useCallback((callback: () => void, delay: number) => {
+    const timeout = setTimeout(() => {
+      timeoutRefs.current.delete(timeout);
+      callback();
+    }, delay);
+    timeoutRefs.current.add(timeout);
+    return timeout;
+  }, []);
+  
+  if (combatants.length !== 2) {
+    return (
+      <div className="bg-gray-800 border border-red-500 rounded-lg p-6 max-w-4xl mx-auto">
+        <div className="text-center text-red-400 font-bold text-xl flex items-center justify-center gap-2">
+          {getWarningIcon("", 20)} INVALID DUEL: Must have exactly 2 combatants
+        </div>
+      </div>
+    );
+  }
+
+  const [combatant1, combatant2] = combatants;
+  const activeCombatant = combatants[currentTurn];
+  const inactiveCombatant = combatants[1 - currentTurn];
+
+  // Get combatant data
+  const getCharacterData = (combatant: Combatant) => {
+    if (combatant.type === 'PC') {
+      return getPlayerCharacter(combatant.id);
+    } else {
+      return getNpc(combatant.id);
+    }
+  };
+
+  const activeCharacter = getCharacterData(activeCombatant);
+  const inactiveCharacter = getCharacterData(inactiveCombatant);
+
+  // Get available weapons for active combatant
+  const getAvailableWeapons = (): InventoryItem[] => {
+    if (!activeCharacter) return [];
+    
+    if (activeCombatant.type === 'PC') {
+      const pc = activeCharacter as any; // Character type
+      return pc.inventory.filter((item: InventoryItem) => 
+        (item.type === 'Close' || item.type === 'Ranged') && !item.broken
+      );
+    } else {
+      // For NPCs, provide basic weapon options
+      return [
+        { id: 'npc-unarmed', name: 'Unarmed', type: 'Close', damage: 1, bonus: 0, slots: 0, equipped: false },
+        { id: 'npc-knife', name: 'Knife', type: 'Close', damage: 1, bonus: 1, slots: 1, equipped: false },
+        { id: 'npc-pistol', name: 'Pistol', type: 'Ranged', damage: 2, bonus: 2, slots: 1, equipped: false }
+      ] as InventoryItem[];
+    }
+  };
+
+  const availableWeapons = getAvailableWeapons();
+  const selectedWeapon = selectedWeaponId ? availableWeapons.find(w => w.id === selectedWeaponId) : null;
+
+  // Calculate dice pools for display
+  const getAttackDicePool = () => {
+    if (!activeCharacter || !selectedWeapon || activeCombatant.type !== 'PC') {
+      return { baseDicePool: 0, stressDicePool: 0 };
+    }
+    
+    const skill = selectedWeapon.type === 'Close' ? Skill.CloseCombat : Skill.RangedCombat;
+    return calculateDicePool(activeCharacter as any, skill, helpDice);
+  };
+
+  const dicePool = getAttackDicePool();
+
+  // Get armor information for both combatants
+  const getArmorInfo = (combatant: Combatant) => {
+    if (combatant.type === 'PC') {
+      const pc = getPlayerCharacter(combatant.id);
+      if (pc) {
+        const armor = pc.inventory.find(i => i.equipped && i.type === 'Armor');
+        return armor ? { name: armor.name, level: armor.armorLevel || 0 } : null;
+      }
+    } else {
+      const npc = getNpc(combatant.id);
+      if (npc && combatant.armorLevel > 0) {
+        return { name: 'Armor', level: combatant.armorLevel };
+      }
+    }
+    return null;
+  };
+
+  const handleAttack = () => {
+    if (!selectedWeapon) {
+      addChatMessage({
+        characterId: 'SYSTEM',
+        characterName: 'System',
+        content: 'Please select a weapon before attacking!',
+        type: 'SYSTEM'
+      });
+      return;
+    }
+
+    setSelectedAction('Attack');
+    setShowCombatTypeButtons(true);
+    setShowMoveButtons(false);
+  };
+
+  const handleCloseCombatAttack = () => {
+    addChatMessage({
+      characterId: activeCombatant.id,
+      characterName: activeCombatant.name,
+      content: `${activeCombatant.name} attacks ${inactiveCombatant.name} with ${selectedWeapon!.name} in close combat! ${helpDice > 0 ? `(+${helpDice} Help Dice)` : ''}`,
+      type: 'IC'
+    });
+    
+    resolveOpposedAttack(activeCombatant.id, inactiveCombatant.id, false);
+    
+    // Debug message
+    addChatMessage({
+      characterId: 'SYSTEM',
+      characterName: 'System',
+      content: `[DEBUG] Close combat attack processed.`,
+      type: 'SYSTEM'
+    });
+    
+    setSafeTimeout(() => {
+      onNextTurn();
+      setSelectedAction(null);
+      setSelectedWeaponId(null);
+      setHelpDice(0);
+      setShowCombatTypeButtons(false);
+    }, 2000);
+  };
+
+  const handleRangedCombatAttack = () => {
+    const coverMessage = inactiveCombatant.isTakingCover ? ' (Target in cover - harder to hit!)' : '';
+    
+    addChatMessage({
+      characterId: activeCombatant.id,
+      characterName: activeCombatant.name,
+      content: `${activeCombatant.name} attacks ${inactiveCombatant.name} with ${selectedWeapon!.name} at range!${coverMessage} ${helpDice > 0 ? `(+${helpDice} Help Dice)` : ''}`,
+      type: 'IC'
+    });
+    
+    resolveOpposedAttack(activeCombatant.id, inactiveCombatant.id, false);
+    
+    // Debug message
+    addChatMessage({
+      characterId: 'SYSTEM',
+      characterName: 'System',
+      content: `[DEBUG] Ranged combat attack processed.`,
+      type: 'SYSTEM'
+    });
+    
+    setSafeTimeout(() => {
+      onNextTurn();
+      setSelectedAction(null);
+      setSelectedWeaponId(null);
+      setHelpDice(0);
+      setShowCombatTypeButtons(false);
+    }, 2000);
+  };
+
+  const handleTakeCover = () => {
+    setSelectedAction('TakeCover');
+    
+    addChatMessage({
+      characterId: activeCombatant.id,
+      characterName: activeCombatant.name,
+      content: `${activeCombatant.name} attempts to take cover! (Rolling Mobility...)`,
+      type: 'IC'
+    });
+
+    // TODO: Add actual Mobility roll here
+    const success = Math.random() > 0.3; // 70% success rate for now
+    
+    if (success) {
+      setIsInCover(true);
+      addChatMessage({
+        characterId: 'SYSTEM',
+        characterName: 'System',
+        content: `✅ ${activeCombatant.name} successfully finds cover! Ranged attacks against them will be harder to hit.`,
+        type: 'SYSTEM'
+      });
+    } else {
+      addChatMessage({
+        characterId: 'SYSTEM',
+        characterName: 'System',
+        content: `❌ ${activeCombatant.name} fails to find adequate cover this round.`,
+        type: 'SYSTEM'
+      });
+    }
+    
+    setSafeTimeout(() => {
+      onNextTurn();
+      setSelectedAction(null);
+    }, 1000);
+  };
+
+  const handleMove = () => {
+    setSelectedAction('Move');
+    setShowMoveButtons(true);
+    setShowCombatTypeButtons(false);
+  };
+
+  const handleMoveToShort = () => {
+    addChatMessage({
+      characterId: activeCombatant.id,
+      characterName: activeCombatant.name,
+      content: `${activeCombatant.name} moves to short range!`,
+      type: 'IC'
+    });
+    setDuelRange(RangeCategory.Short);
+    finishMoveAction();
+  };
+
+  const handleMoveToLong = () => {
+    addChatMessage({
+      characterId: activeCombatant.id,
+      characterName: activeCombatant.name,
+      content: `${activeCombatant.name} moves to long range!`,
+      type: 'IC'
+    });
+    setDuelRange(RangeCategory.Long);
+    finishMoveAction();
+  };
+
+  const handleMoveToExtreme = () => {
+    addChatMessage({
+      characterId: activeCombatant.id,
+      characterName: activeCombatant.name,
+      content: `${activeCombatant.name} moves to extreme range!`,
+      type: 'IC'
+    });
+    setDuelRange(RangeCategory.Extreme);
+    finishMoveAction();
+  };
+
+  const finishMoveAction = () => {
+    setSafeTimeout(() => {
+      onNextTurn();
+      setSelectedAction(null);
+      setShowMoveButtons(false);
+    }, 1000);
+  };
+
+  const handleOther = () => {
+    setSelectedAction('Other');
+    addChatMessage({
+      characterId: activeCombatant.id,
+      characterName: activeCombatant.name,
+      content: `${activeCombatant.name} performs another action.`,
+      type: 'IC'
+    });
+    
+    setSafeTimeout(() => {
+      onNextTurn();
+      setSelectedAction(null);
+    }, 1000);
+  };
+
+  const getHealthColor = (health: number) => {
+    if (health <= 1) return 'text-red-400';
+    if (health <= 2) return 'text-yellow-400';
+    return 'text-green-400';
+  };
+
+  const getRangeColor = (range: RangeCategory) => {
+    switch (range) {
+      case RangeCategory.Short: return 'text-yellow-400';
+      case RangeCategory.Long: return 'text-blue-400';
+      case RangeCategory.Extreme: return 'text-purple-400';
+      default: return 'text-gray-400';
+    }
+  };
+
+  return (
+    <div className="bg-gray-800 border border-red-500 rounded-lg p-4 max-w-2xl mx-auto shadow-lg">
+      {/* Header with VS Logo */}
+      <div className="flex items-center justify-center mb-4">
+        <img 
+          src="/VS logo.png" 
+          alt="VS" 
+          className="w-16 h-16"
+        />
+      </div>
+
+      {/* Round Counter */}
+      <div className="text-center mb-4">
+        <h3 className="text-2xl font-bold text-red-500">DUEL - Round {round}</h3>
+        <p className="text-gray-400 text-sm">Current Turn: {activeCombatant.name}</p>
+      </div>
+
+      {/* Combatants Display */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* Left Combatant */}
+        <div className={`text-center p-3 rounded border-2 ${
+          currentTurn === 0 ? 'border-blue-500 bg-blue-900/20' : 'border-gray-600'
+        }`}>
+          <img 
+            src={combatant1.tokenImage || "/default-token.svg"} 
+            alt={combatant1.name}
+            className="w-12 h-12 mx-auto mb-1 rounded-full border-2 border-blue-500"
+          />
+          <h4 className="font-bold text-blue-400 text-sm">{combatant1.name}</h4>
+          <div className="text-xs">
+            <div className={`font-medium ${getHealthColor(combatant1.health)}`}>
+              Health: {combatant1.health}/3
+            </div>
+            {getArmorInfo(combatant1) && (
+              <div className="text-green-400 text-xs flex items-center gap-1">
+                {getArmorIcon("", 12)} {getArmorInfo(combatant1)!.name} ({getArmorInfo(combatant1)!.level})
+              </div>
+            )}
+            {combatant1.isTakingCover && (
+              <div className="text-blue-300 text-xs flex items-center gap-1">
+                {getCoverIcon("", 12)} In Cover
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Combatant */}
+        <div className={`text-center p-3 rounded border-2 ${
+          currentTurn === 1 ? 'border-red-500 bg-red-900/20' : 'border-gray-600'
+        }`}>
+          <img 
+            src={combatant2.tokenImage || "/default-token.svg"} 
+            alt={combatant2.name}
+            className="w-12 h-12 mx-auto mb-1 rounded-full border-2 border-red-500"
+          />
+          <h4 className="font-bold text-red-400 text-sm">{combatant2.name}</h4>
+          <div className="text-xs">
+            <div className={`font-medium ${getHealthColor(combatant2.health)}`}>
+              Health: {combatant2.health}/3
+            </div>
+            {getArmorInfo(combatant2) && (
+              <div className="text-green-400 text-xs flex items-center gap-1">
+                {getArmorIcon("", 12)} {getArmorInfo(combatant2)!.name} ({getArmorInfo(combatant2)!.level})
+              </div>
+            )}
+            {combatant2.isTakingCover && (
+              <div className="text-blue-300 text-xs flex items-center gap-1">
+                {getCoverIcon("", 12)} In Cover
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Weapon Selection and Help Dice - Side by Side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+        {/* Weapon Selection */}
+        <div className="p-3 bg-purple-900/30 rounded-lg border border-purple-700">
+          <label className="block text-purple-300 font-bold text-sm mb-2">
+            🗡️ SELECT WEAPON
+          </label>
+          
+          <select
+            value={selectedWeaponId || ''}
+            onChange={(e) => setSelectedWeaponId(e.target.value || null)}
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white text-sm focus:border-purple-500 focus:outline-none"
+          >
+            <option value="">-- Choose Weapon --</option>
+            {availableWeapons.map((weapon) => {
+              const damage = weapon.damage || 1;
+              const bonus = weapon.bonus || 0;
+              return (
+                <option key={weapon.id} value={weapon.id}>
+                  {weapon.name} ({damage} dmg{bonus > 0 ? `, +${bonus} bonus` : ''})
+                </option>
+              );
+            })}
+          </select>
+          
+          {selectedWeapon && (
+            <div className="mt-2 p-2 bg-purple-800/20 rounded border border-purple-600/50">
+              <div className="text-xs text-purple-200">
+                <div className="font-bold text-purple-100 mb-1">SELECTED WEAPON:</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-white font-semibold">{selectedWeapon.name}</span>
+                  <span className="px-2 py-1 bg-yellow-600 text-yellow-100 rounded text-xs font-bold">
+                    {selectedWeapon.damage || 1} DMG
+                  </span>
+                  {selectedWeapon.bonus && selectedWeapon.bonus > 0 && (
+                    <span className="px-2 py-1 bg-green-600 text-green-100 rounded text-xs font-bold">
+                      +{selectedWeapon.bonus} BONUS
+                    </span>
+                  )}
+                  {selectedWeapon.poisonLevel && selectedWeapon.poisonLevel > 0 && (
+                    <span className="px-2 py-1 bg-purple-600 text-purple-100 rounded text-xs font-bold">
+                      ☠️ POISON {selectedWeapon.poisonLevel}
+                    </span>
+                  )}
+                  {selectedWeapon.isIncendiary && (
+                    <span className="px-2 py-1 bg-orange-600 text-orange-100 rounded text-xs font-bold">
+                      🔥 INCENDIARY
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Help Dice Controls */}
+        <div className="p-2 bg-green-900/30 rounded border border-green-700">
+          <label className="block text-green-300 font-bold text-sm mb-1">HELP DICE:</label>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setHelpDice(Math.max(0, helpDice - 1))}
+              className="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
+              disabled={helpDice <= 0}
+            >
+              -
+            </button>
+            <span className="text-white font-bold text-sm min-w-[1.5rem] text-center">
+              {helpDice}
+            </span>
+            <button
+              onClick={() => setHelpDice(helpDice + 1)}
+              className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-white text-sm"
+            >
+              +
+            </button>
+            <span className="text-green-200 text-xs ml-1">
+              {helpDice > 0 ? `+${helpDice} bonus dice` : 'No bonus dice'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Distance/Range Control */}
+      <div className="mb-4 p-3 bg-gray-700 rounded">
+        <h4 className="text-sm font-bold mb-2 text-center">Combat Range</h4>
+        <div className="flex justify-center space-x-4">
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="radio"
+              name="range"
+              value={RangeCategory.Short}
+              checked={duelRange === RangeCategory.Short}
+              onChange={(e) => setDuelRange(e.target.value as RangeCategory)}
+              className="mr-2"
+            />
+            <span className={`font-bold ${getRangeColor(RangeCategory.Short)} flex items-center gap-1`}>
+              {getMeleeIcon("", 14)} SHORT (MELEE)
+            </span>
+          </label>
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="radio"
+              name="range"
+              value={RangeCategory.Long}
+              checked={duelRange === RangeCategory.Long}
+              onChange={(e) => setDuelRange(e.target.value as RangeCategory)}
+              className="mr-2"
+            />
+            <span className={`font-bold ${getRangeColor(RangeCategory.Long)}`}>
+              � LONG (RANGED)
+            </span>
+          </label>
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="radio"
+              name="range"
+              value={RangeCategory.Extreme}
+              checked={duelRange === RangeCategory.Extreme}
+              onChange={(e) => setDuelRange(e.target.value as RangeCategory)}
+              className="mr-2"
+            />
+            <span className={`font-bold ${getRangeColor(RangeCategory.Extreme)} flex items-center gap-1`}>
+              {getSniperIcon("", 14)} EXTREME (SNIPER)
+            </span>
+          </label>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <button
+          onClick={handleAttack}
+          disabled={selectedAction === 'Attack' || !selectedWeapon}
+          className={`px-3 py-2 rounded font-bold text-white transition-all text-sm ${
+            selectedAction === 'Attack'
+              ? 'bg-yellow-600 cursor-not-allowed'
+              : !selectedWeapon
+              ? 'bg-gray-600 cursor-not-allowed'
+              : 'bg-red-600 hover:bg-red-700'
+          }`}
+        >
+          <div className="flex items-center gap-1">
+            {getAttackIcon("", 14)}
+            {selectedAction === 'Attack' ? 'ATTACKING...' : 'ATTACK'}
+          </div>
+        </button>
+
+        <button
+          onClick={handleTakeCover}
+          disabled={selectedAction === 'TakeCover'}
+          className={`px-3 py-2 rounded font-bold text-white transition-all text-sm ${
+            selectedAction === 'TakeCover'
+              ? 'bg-yellow-600 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
+        >
+          <div className="flex items-center gap-1">
+            {getShieldIcon("", 14)}
+            {selectedAction === 'TakeCover' ? 'TAKING COVER...' : 'TAKE COVER'}
+          </div>
+        </button>
+
+        <button
+          onClick={handleMove}
+          disabled={selectedAction === 'Move'}
+          className={`px-3 py-2 rounded font-bold text-white transition-all text-sm ${
+            selectedAction === 'Move'
+              ? 'bg-yellow-600 cursor-not-allowed'
+              : 'bg-green-600 hover:bg-green-700'
+          }`}
+        >
+          <div className="flex items-center gap-1">
+            {getMovementIcon("", 14)}
+            {selectedAction === 'Move' ? 'MOVING...' : 'MOVE'}
+          </div>
+        </button>
+
+        <button
+          onClick={handleOther}
+          disabled={selectedAction === 'Other'}
+          className={`px-3 py-2 rounded font-bold text-white transition-all text-sm ${
+            selectedAction === 'Other'
+              ? 'bg-yellow-600 cursor-not-allowed'
+              : 'bg-purple-600 hover:bg-purple-700'
+          }`}
+        >
+          <div className="flex items-center gap-1">
+            {getActionIcon("", 14)}
+            {selectedAction === 'Other' ? 'ACTING...' : 'OTHER'}
+          </div>
+        </button>
+      </div>
+
+      {/* Debug: Reset Action Button (temporary) */}
+      {selectedAction && (
+        <div className="text-center mb-4">
+          <button
+            onClick={() => {
+              setSelectedAction(null);
+              setShowMoveButtons(false);
+              setShowCombatTypeButtons(false);
+            }}
+            className="px-3 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded text-xs"
+          >
+            Reset Action (Debug)
+          </button>
+        </div>
+      )}
+
+      {/* End Duel Button */}
+      <div className="text-center">
+        <button
+          onClick={onEndDuel}
+          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-white text-sm"
+        >
+          End Duel
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default memo(DuelCard);
